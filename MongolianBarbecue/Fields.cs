@@ -2,6 +2,7 @@
 {
     class Fields
     {
+        public const string MessageId = "id";
         public const string DestinationQueueName = "q";
         public const string SendTime = "st";
         public const string ReceiveTime = "rt";

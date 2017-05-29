@@ -18,7 +18,7 @@ namespace MongolianBarbecue
             QueueName = queueName;
         }
 
-        public async Task<Message> GetNextAsync()
+        public async Task<ReceivedMessage> GetNextAsync()
         {
             var receiveTimeCriteria = new BsonDocument { { "$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLeaseDuration) } };
 
@@ -38,12 +38,31 @@ namespace MongolianBarbecue
                 ReturnDocument = ReturnDocument.After
             };
 
-            var document = await _config.Collection.FindOneAndUpdateAsync(filter, update, options);
+            var collection = _config.Collection;
+
+            var document = await collection.FindOneAndUpdateAsync(filter, update, options);
 
             if (document == null) return null;
 
-            return new Message(document[Fields.Body].AsByteArray, document[Fields.Headers].AsBsonArray
-                .ToDictionary(value => value[Fields.Key].AsString, value => value[Fields.Value].AsString));
+            var body = document[Fields.Body].AsByteArray;
+            var headers = document[Fields.Headers].AsBsonArray
+                .ToDictionary(value => value[Fields.Key].AsString, value => value[Fields.Value].AsString);
+
+            var id = document["_id"].AsString;
+
+            Task Delete() => collection.DeleteOneAsync(doc => doc["_id"] == id);
+
+            var abandonUpdate = new BsonDocument
+            {
+                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
+            };
+
+            Task Abandon() => collection.UpdateOneAsync(doc => doc["_id"] == id,
+                new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+
+            var message = new ReceivedMessage(body, headers, Delete, Abandon);
+
+            return message;
         }
     }
 }

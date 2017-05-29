@@ -27,10 +27,13 @@ namespace MongolianBarbecue
 
             await _semaphore.WaitAsync();
 
+            var id = Guid.NewGuid().ToString();
+
             try
             {
                 await _config.Collection.InsertOneAsync(new BsonDocument
                 {
+                    {"_id", id},
                     {Fields.DestinationQueueName, destinationQueueName},
                     {Fields.SendTime, DateTime.UtcNow},
                     {Fields.ReceiveTime, DateTime.MinValue},
