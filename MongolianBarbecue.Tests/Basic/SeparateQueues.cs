@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using MongolianBarbecue.Model;
 using MongolianBarbecue.Tests.Extensions;
 using NUnit.Framework;
 

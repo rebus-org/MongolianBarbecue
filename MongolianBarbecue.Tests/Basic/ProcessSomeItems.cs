@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongolianBarbecue.Model;
 using NUnit.Framework;
 
 namespace MongolianBarbecue.Tests.Basic

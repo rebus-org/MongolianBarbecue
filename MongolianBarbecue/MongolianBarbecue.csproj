@@ -4,6 +4,10 @@
     <TargetFrameworks>netstandard16;net45</TargetFrameworks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard16|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard16\MongolianBarbecue.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="mongodb.driver" Version="2.4.3" />
   </ItemGroup>

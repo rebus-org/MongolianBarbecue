@@ -3,20 +3,31 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
+using MongolianBarbecue.Internals;
+using MongolianBarbecue.Model;
 
 namespace MongolianBarbecue
 {
+    /// <summary>
+    /// Represents a message producer
+    /// </summary>
     public class Producer
     {
         readonly Config _config;
         readonly SemaphoreSlim _semaphore;
 
+        /// <summary>
+        /// Creates the producer from the given configuration
+        /// </summary>
         public Producer(Config config)
         {
             _config = config;
             _semaphore = new SemaphoreSlim(_config.MaxParallelism, _config.MaxParallelism);
         }
 
+        /// <summary>
+        /// Sends the given message to the specified queue
+        /// </summary>
         public async Task SendAsync(string destinationQueueName, Message message)
         {
             if (destinationQueueName == null) throw new ArgumentNullException(nameof(destinationQueueName));

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using MongolianBarbecue.Model;
 using NUnit.Framework;
 // ReSharper disable ArgumentsStyleLiteral
 // ReSharper disable ArgumentsStyleNamedExpression

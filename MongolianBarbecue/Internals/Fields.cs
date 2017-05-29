@@ -1,4 +1,4 @@
-﻿namespace MongolianBarbecue
+﻿namespace MongolianBarbecue.Internals
 {
     class Fields
     {

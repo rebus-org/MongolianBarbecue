@@ -3,24 +3,38 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongolianBarbecue.Internals;
+using MongolianBarbecue.Model;
 
 namespace MongolianBarbecue
 {
+    /// <summary>
+    /// Represents a message consumer for a specific queue
+    /// </summary>
     public class Consumer
     {
         readonly Config _config;
 
+        /// <summary>
+        /// Gets the name of the queue
+        /// </summary>
         public string QueueName { get; }
 
+        /// <summary>
+        /// Creates the consumer from the given configuration and queue name
+        /// </summary>
         public Consumer(Config config, string queueName)
         {
             _config = config;
             QueueName = queueName;
         }
 
+        /// <summary>
+        /// Gets the next available message or immediately returns null if no message was available
+        /// </summary>
         public async Task<ReceivedMessage> GetNextAsync()
         {
-            var receiveTimeCriteria = new BsonDocument { { "$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLeaseDuration) } };
+            var receiveTimeCriteria = new BsonDocument { { "$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLease) } };
 
             var filter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
             {
@@ -60,7 +74,7 @@ namespace MongolianBarbecue
             Task Abandon() => collection.UpdateOneAsync(doc => doc["_id"] == id,
                 new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
 
-            var message = new ReceivedMessage(body, headers, Delete, Abandon);
+            var message = new ReceivedMessage(headers, body, Delete, Abandon);
 
             return message;
         }
