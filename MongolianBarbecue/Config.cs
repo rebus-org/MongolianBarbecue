@@ -1,17 +1,27 @@
-﻿using MongoDB.Bson;
+﻿using System;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace MongolianBarbecue
 {
     public class Config
     {
-        readonly IMongoCollection<BsonDocument> _collection;
-
-        public Config(IMongoDatabase database, string collectionName)
+        public Config(IMongoDatabase database, string collectionName, int defaultMessageLeaseSeconds = 60, int maxParallelism = 20)
         {
-            _collection = database.GetCollection<BsonDocument>(collectionName);
+            if (defaultMessageLeaseSeconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(defaultMessageLeaseSeconds), defaultMessageLeaseSeconds, "Please specify a positive number of seconds for the lease duration");
+            }
+
+            MaxParallelism = maxParallelism;
+            Collection = database.GetCollection<BsonDocument>(collectionName);
+            DefaultMessageLeaseDuration = TimeSpan.FromSeconds(defaultMessageLeaseSeconds);
         }
 
-        internal IMongoCollection<BsonDocument> Collection => _collection;
+        internal IMongoCollection<BsonDocument> Collection { get; }
+
+        internal int MaxParallelism { get; }
+
+        internal TimeSpan DefaultMessageLeaseDuration { get; }
     }
 }

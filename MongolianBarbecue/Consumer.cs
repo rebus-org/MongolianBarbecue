@@ -22,7 +22,7 @@ namespace MongolianBarbecue
         {
             var filter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
             {
-                {Fields.ReceiveTime, new BsonDocument {{"$lt", DateTime.UtcNow}}}
+                {Fields.ReceiveTime, new BsonDocument {{"$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLeaseDuration)}}}
             });
 
             var update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument
