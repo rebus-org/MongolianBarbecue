@@ -22,12 +22,16 @@ namespace MongolianBarbecue
             if (destinationQueueName == null) throw new ArgumentNullException(nameof(destinationQueueName));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
+            if (!message.Headers.TryGetValue(Fields.MessageId, out var id))
+            {
+                id = Guid.NewGuid().ToString();
+                message.Headers[Fields.MessageId] = id;
+            }
+
             var headers = BsonArray.Create(message.Headers
                 .Select(kvp => new BsonDocument { { Fields.Key, kvp.Key }, { Fields.Value, kvp.Value } }));
 
             await _semaphore.WaitAsync();
-
-            var id = Guid.NewGuid().ToString();
 
             try
             {

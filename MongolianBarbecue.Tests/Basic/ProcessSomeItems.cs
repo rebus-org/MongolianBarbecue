@@ -72,6 +72,8 @@ namespace MongolianBarbecue.Tests.Basic
                 if (nextMessage == null) break;
 
                 receivedStrings.Add(Encoding.UTF8.GetString(nextMessage.Body));
+
+                await nextMessage.Ack();
             }
 
             strings.Sort();
