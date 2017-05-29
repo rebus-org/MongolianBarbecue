@@ -20,9 +20,12 @@ namespace MongolianBarbecue
 
         public async Task<Message> GetNextAsync()
         {
+            var receiveTimeCriteria = new BsonDocument { { "$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLeaseDuration) } };
+
             var filter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
             {
-                {Fields.ReceiveTime, new BsonDocument {{"$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLeaseDuration)}}}
+                {Fields.DestinationQueueName, QueueName},
+                {Fields.ReceiveTime, receiveTimeCriteria}
             });
 
             var update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument
@@ -41,6 +44,6 @@ namespace MongolianBarbecue
 
             return new Message(document[Fields.Body].AsByteArray, document[Fields.Headers].AsBsonArray
                 .ToDictionary(value => value[Fields.Key].AsString, value => value[Fields.Value].AsString));
-    }
+        }
     }
 }
