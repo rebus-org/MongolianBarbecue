@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongolianBarbecue.Internals;
 
 namespace MongolianBarbecue
 {
@@ -42,7 +43,7 @@ namespace MongolianBarbecue
 
             var mongoDatabase = new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName);
 
-            Collection = mongoDatabase.GetCollection<BsonDocument>(collectionName);
+            Collection = InitializeCollection(collectionName, mongoDatabase);
             MaxParallelism = maxParallelism;
             DefaultMessageLease = TimeSpan.FromSeconds(defaultMessageLeaseSeconds);
         }
@@ -54,14 +55,27 @@ namespace MongolianBarbecue
         /// </summary>
         public Config(IMongoDatabase database, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism)
         {
+            if (database == null) throw new ArgumentNullException(nameof(database));
             if (defaultMessageLeaseSeconds <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(defaultMessageLeaseSeconds), defaultMessageLeaseSeconds, "Please specify a positive number of seconds for the lease duration");
             }
 
             MaxParallelism = maxParallelism;
-            Collection = database?.GetCollection<BsonDocument>(collectionName) ?? throw new ArgumentNullException(nameof(database));
+            Collection = InitializeCollection(collectionName, database);
             DefaultMessageLease = TimeSpan.FromSeconds(defaultMessageLeaseSeconds);
+        }
+
+        static IMongoCollection<BsonDocument> InitializeCollection(string collectionName, IMongoDatabase mongoDatabase)
+        {
+            var collection = mongoDatabase.GetCollection<BsonDocument>(collectionName);
+            var index = new BsonDocument
+            {
+                {Fields.DestinationQueueName, 1},
+                {Fields.ReceiveTime, 1},
+            };
+            collection.Indexes.CreateOne(new BsonDocumentIndexKeysDefinition<BsonDocument>(index));
+            return collection;
         }
 
         /// <summary>

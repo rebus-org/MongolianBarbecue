@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard16;net45</TargetFrameworks>
+    <TargetFrameworks>net45;netstandard16</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,12 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MongolianBarbecue\MongolianBarbecue.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
-    <PackageReference Include="tababular">
-      <Version>1.0.6</Version>
-    </PackageReference>
   </ItemGroup>
 
 </Project>

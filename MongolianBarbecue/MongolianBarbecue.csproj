@@ -1,4 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net45;netstandard16</TargetFrameworks>
+  </PropertyGroup>
+
   <PropertyGroup>
     <Authors>mookid8000</Authors>
     <PackageLicenseUrl>https://raw.githubusercontent.com/rebus-org/MongolianBarbecue/master/LICENSE.md</PackageLicenseUrl>
@@ -8,13 +13,13 @@
     <RepositoryUrl>https://github.com/rebus-org/MongolianBarbecue</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-  <PropertyGroup>
-    <TargetFrameworks>netstandard16;net45</TargetFrameworks>
-  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <DocumentationFile>bin\Release\$(TargetFramework)\MongolianBarbecue.xml</DocumentationFile>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="mongodb.driver" Version="2.4.3"/>
   </ItemGroup>
+
 </Project>

@@ -22,7 +22,7 @@ namespace MongolianBarbecue.Tests.Basic
         }
 
         [TestCase(10000, 10)]
-        public async Task WreckHavoc(int count, int queues)
+        public async Task WreakHavoc(int count, int queues)
         {
             var stopwatch = new BetterStopwatch();
 
