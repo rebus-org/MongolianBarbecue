@@ -66,13 +66,20 @@ namespace MongolianBarbecue
 
             Task Delete() => collection.DeleteOneAsync(doc => doc["_id"] == id);
 
-            var abandonUpdate = new BsonDocument
+            async Task Abandon()
             {
-                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
-            };
+                var abandonUpdate = new BsonDocument
+                {
+                    {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
+                };
 
-            Task Abandon() => collection.UpdateOneAsync(doc => doc["_id"] == id,
-                new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+                try
+                {
+                    await collection.UpdateOneAsync(doc => doc["_id"] == id,
+                        new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+                }
+                catch { } // lease will be released eventually
+            }
 
             var message = new ReceivedMessage(headers, body, Delete, Abandon);
 

@@ -1,6 +1,8 @@
 # Mongolian Barbecue
 
-It's just a message queue that (ab)uses MongoDB to do its thing :speak_no_evil:
+It's just a message queue implementation that (ab)uses MongoDB to do its thing :eyes:
+
+Another way to put it is: This library lets you pretend that MongoDB is a message queue :speak_no_evil:
 
 ## Example
 
