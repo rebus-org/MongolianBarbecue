@@ -11,8 +11,13 @@ namespace MongolianBarbecue.Tests
         {
             var mongoUrl = new MongoUrl("mongodb://localhost/mongolian-barbecue-test");
 
-            return new MongoClient(mongoUrl)
-                .GetDatabase(mongoUrl.DatabaseName);
+            var mongoClient = new MongoClient(mongoUrl);
+
+            mongoClient.DropDatabase(mongoUrl.DatabaseName);
+
+            var database = mongoClient.GetDatabase(mongoUrl.DatabaseName);
+            
+            return database;
         }
 
         readonly ConcurrentStack<IDisposable> _disposables = new ConcurrentStack<IDisposable>();

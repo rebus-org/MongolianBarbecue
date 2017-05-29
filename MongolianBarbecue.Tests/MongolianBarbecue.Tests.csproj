@@ -9,4 +9,8 @@
     <PackageReference Include="nunit" Version="3.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MongolianBarbecue\MongolianBarbecue.csproj" />
+  </ItemGroup>
+
 </Project>
