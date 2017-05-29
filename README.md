@@ -1,6 +1,6 @@
 # Mongolian Barbecue
 
-It's just a message queue that (ab)uses MongoDB to do its thing.
+It's just a message queue that (ab)uses MongoDB to do its thing :speak_no_evil:
 
 ## Example
 
@@ -11,6 +11,10 @@ The MongoDB connection string looks like this: `mongodb://MONGOBONGO01/Readme`, 
 	var config = new Config("mongodb://MONGOBONGO01/Readme", "messages");
 
 to create a configuration that uses the `messages` collection for exchanging messages.
+
+:+1:
+
+
 
 ## How to send messages?
 
@@ -23,6 +27,10 @@ and then send a byte array payload to `queue-a` like this:
 	var payload = new byte[] { 0xC0, 0xFF, 0x33, 0xBA, 0xDA, 0x55 };
 
 	await producer.SendAsync("queue-a", new Message(payload));
+
+:clap:
+
+
 
 ## How to receive messages?
 
@@ -53,3 +61,5 @@ and then receive the next message (or null if none was to be found) like this:
 			throw;
 		}
 	}
+
+:ok_hand:
