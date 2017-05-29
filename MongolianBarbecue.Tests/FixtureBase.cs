@@ -1,12 +1,21 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using MongoDB.Driver;
 using NUnit.Framework;
+using Tababular;
 
 namespace MongolianBarbecue.Tests
 {
     public abstract class FixtureBase
     {
+        static readonly TableFormatter Formatter = new TableFormatter(new Hints { CollapseVerticallyWhenSingleLine = true });
+
+        protected void PrintTable(IEnumerable objects)
+        {
+            Console.WriteLine(Formatter.FormatObjects(objects));
+        }
+
         protected IMongoDatabase GetCleanTestDatabase()
         {
             var mongoUrl = new MongoUrl("mongodb://localhost/mongolian-barbecue-test");
@@ -16,7 +25,7 @@ namespace MongolianBarbecue.Tests
             mongoClient.DropDatabase(mongoUrl.DatabaseName);
 
             var database = mongoClient.GetDatabase(mongoUrl.DatabaseName);
-            
+
             return database;
         }
 

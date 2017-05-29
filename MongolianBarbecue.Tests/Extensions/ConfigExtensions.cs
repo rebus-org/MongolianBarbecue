@@ -20,6 +20,7 @@ namespace MongolianBarbecue.Tests.Extensions
                 if (message != null)
                 {
                     messages.Add(message);
+                    await message.Ack();
                     lastMessage = DateTime.UtcNow;
                     continue;
                 }
