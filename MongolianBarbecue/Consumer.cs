@@ -82,6 +82,30 @@ namespace MongolianBarbecue
         }
 
         /// <summary>
+        /// Gets whether a message with the given ID exists
+        /// </summary>
+        public async Task<bool> Exists(string messageId)
+        {
+            var collection = _config.Collection;
+
+            var criteria = new BsonDocument
+            {
+                {"_id", messageId }
+            };
+
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                return await collection.CountAsync(new BsonDocumentFilterDefinition<BsonDocument>(criteria)) > 0;
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        /// <summary>
         /// Gets the next available message or immediately returns null if no message was available
         /// </summary>
         public async Task<ReceivedMessage> GetNextAsync()
