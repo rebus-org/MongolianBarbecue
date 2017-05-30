@@ -65,3 +65,31 @@ and then receive the next message (or null if none was to be found) like this:
 	}
 
 :ok_hand:
+
+
+
+## How to configure things?
+
+The constructor of the configuration object accepts a couple of optional parameters, allowing you to customize a couple of things.
+
+### Message lease timeout
+
+By default, a message is made invisible for 60 seconds when it is received. If it is ACKed within that time, it is removed from the queue
+(i.e. it is deleted), but if that does not happen - e.g. if the consumer crashes & burns in a haze of `OutOfMemoryException`s and 
+`StackOverflowExceptions`s - then the message will automatically become visible to other consumer again, once the lease expires.
+
+If 60 seconds is not what you want, you can customize it like this:
+
+    var config = new Config(..., ..., defaultMessageLeaseSeconds: 20);
+
+to lower the lease timeout to 20 seconds.
+
+### Max parallelism
+
+The MongoDB driver does not seem to protect itself from connection pool depletion resulting from too many concurrent asynchronous
+operations, so we may limit the number of concurrent operations per `Consumer` / `Producer` object instance by passing a value
+to the configuration object like this:
+
+    var config = new Config(..., ..., maxParallelism: 10);
+
+The default value for "max parallelism" is 20.

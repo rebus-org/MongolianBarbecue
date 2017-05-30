@@ -20,7 +20,7 @@ namespace MongolianBarbecue
         /// Indicates the default max level of parallelism allowed (i.e. allowed number of concurrent async <see cref="Task"/>-based 
         /// operations, constrained within one <see cref="Producer"/> or <see cref="Consumer"/> instance)
         /// </summary>
-        const int DefaultMaxParallelism = 20;
+        public const int DefaultMaxParallelism = 20;
 
         /// <summary>
         /// Creates the configuration using the given MongoDB URL (which must contain a database name) and <paramref name="collectionName"/>.
