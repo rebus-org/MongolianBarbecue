@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -14,6 +15,7 @@ namespace MongolianBarbecue
     public class Consumer
     {
         readonly Config _config;
+        readonly SemaphoreSlim _semaphore;
 
         /// <summary>
         /// Gets the name of the queue
@@ -27,6 +29,7 @@ namespace MongolianBarbecue
         {
             _config = config;
             QueueName = queueName;
+            _semaphore = new SemaphoreSlim(_config.MaxParallelism, _config.MaxParallelism);
         }
 
         /// <summary>
@@ -54,36 +57,48 @@ namespace MongolianBarbecue
 
             var collection = _config.Collection;
 
-            var document = await collection.FindOneAndUpdateAsync(filter, update, options);
+            await _semaphore.WaitAsync();
 
-            if (document == null) return null;
-
-            var body = document[Fields.Body].AsByteArray;
-            var headers = document[Fields.Headers].AsBsonArray
-                .ToDictionary(value => value[Fields.Key].AsString, value => value[Fields.Value].AsString);
-
-            var id = document["_id"].AsString;
-
-            Task Delete() => collection.DeleteOneAsync(doc => doc["_id"] == id);
-
-            async Task Abandon()
+            try
             {
-                var abandonUpdate = new BsonDocument
-                {
-                    {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
-                };
+                var document = await collection.FindOneAndUpdateAsync(filter, update, options);
 
-                try
+                if (document == null) return null;
+
+                var body = document[Fields.Body].AsByteArray;
+                var headers = document[Fields.Headers].AsBsonArray
+                    .ToDictionary(value => value[Fields.Key].AsString, value => value[Fields.Value].AsString);
+
+                var id = document["_id"].AsString;
+
+                Task Delete() => collection.DeleteOneAsync(doc => doc["_id"] == id);
+
+                async Task Abandon()
                 {
-                    await collection.UpdateOneAsync(doc => doc["_id"] == id,
-                        new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+                    var abandonUpdate = new BsonDocument
+                    {
+                        {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
+                    };
+
+                    try
+                    {
+                        await collection.UpdateOneAsync(doc => doc["_id"] == id,
+                            new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+                    }
+                    catch
+                    {
+                        // lease will be released eventually
+                    }
                 }
-                catch { } // lease will be released eventually
+
+                var message = new ReceivedMessage(headers, body, Delete, Abandon);
+
+                return message;
             }
-
-            var message = new ReceivedMessage(headers, body, Delete, Abandon);
-
-            return message;
+            finally
+            {
+                _semaphore.Release();
+            }
         }
     }
 }
