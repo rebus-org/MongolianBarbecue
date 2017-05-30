@@ -92,5 +92,22 @@ namespace MongolianBarbecue.Tests.Basic
             Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
             Assert.That(messageReceivedSecondTime, Is.Null);
         }
+
+        [Test]
+        public async Task GetsTheSameMessageAgainBeforeLeaseExpiresIfTheMessageWasNackedUsingSeparateFunction()
+        {
+            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+
+            var messageReceivedFirstTime = await _consumer.GetNextAsync();
+            var messageId = messageReceivedFirstTime.MessageId;
+
+            await _consumer.Nack(messageId);
+
+            var messageReceivedSecondTime = await _consumer.GetNextAsync();
+
+            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+            Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
+        }
     }
 }
