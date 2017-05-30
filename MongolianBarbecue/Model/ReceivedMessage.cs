@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MongolianBarbecue.Internals;
 
 namespace MongolianBarbecue.Model
 {
@@ -19,7 +20,19 @@ namespace MongolianBarbecue.Model
         {
             _ack = ack ?? throw new ArgumentNullException(nameof(ack));
             _nack = nack ?? throw new ArgumentNullException(nameof(nack));
+
+            if (!headers.TryGetValue(Fields.MessageId, out var messageId))
+            {
+                throw new ArgumentException($"ReceivedMessage model requires that the '{Fields.MessageId}' header is present");
+            }
+
+            MessageId = messageId;
         }
+
+        /// <summary>
+        /// Gets the message ID
+        /// </summary>
+        public string MessageId { get; }
 
         /// <summary>
         /// ACKs the message (deleting it from the underlying storage)

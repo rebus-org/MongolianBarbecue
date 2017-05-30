@@ -74,5 +74,23 @@ namespace MongolianBarbecue.Tests.Basic
             Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
         }
 
+        [Test]
+        public async Task DoesNotGetTheSameMessageAgainWhenLeaseExpiresIfTheMessageWasAckedUsingSeparateFunction()
+        {
+            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+
+            var messageReceivedFirstTime = await _consumer.GetNextAsync();
+            var messageId = messageReceivedFirstTime.MessageId;
+
+            await _consumer.Ack(messageId);
+
+            await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
+
+            var messageReceivedSecondTime = await _consumer.GetNextAsync();
+
+            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+            Assert.That(messageReceivedSecondTime, Is.Null);
+        }
     }
 }

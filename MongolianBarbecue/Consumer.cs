@@ -33,6 +33,55 @@ namespace MongolianBarbecue
         }
 
         /// <summary>
+        /// Acknowledges having processed the message with the given <paramref name="messageId"/>.
+        /// This will delete the message document from the underlying MongoDB collection.
+        /// </summary>
+        public async Task Ack(string messageId)
+        {
+            var collection = _config.Collection;
+
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                await collection.DeleteOneAsync(doc => doc["_id"] == messageId);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// Abandons the lease for the message with the given <paramref name="messageId"/>.
+        /// This will set the <see cref="Fields.ReceiveTime"/> field of the message document to <see cref="DateTime.MinValue"/>.
+        /// </summary>
+        public async Task Nack(string messageId)
+        {
+            var collection = _config.Collection;
+
+            var abandonUpdate = new BsonDocument
+            {
+                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
+            };
+
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                await collection.UpdateOneAsync(doc => doc["_id"] == messageId, new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+            }
+            catch
+            {
+                // lease will be released eventually
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        /// <summary>
         /// Gets the next available message or immediately returns null if no message was available
         /// </summary>
         public async Task<ReceivedMessage> GetNextAsync()
@@ -71,27 +120,7 @@ namespace MongolianBarbecue
 
                 var id = document["_id"].AsString;
 
-                Task Delete() => collection.DeleteOneAsync(doc => doc["_id"] == id);
-
-                async Task Abandon()
-                {
-                    var abandonUpdate = new BsonDocument
-                    {
-                        {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
-                    };
-
-                    try
-                    {
-                        await collection.UpdateOneAsync(doc => doc["_id"] == id,
-                            new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
-                    }
-                    catch
-                    {
-                        // lease will be released eventually
-                    }
-                }
-
-                var message = new ReceivedMessage(headers, body, Delete, Abandon);
+                var message = new ReceivedMessage(headers, body, () => Ack(id), () => Nack(id));
 
                 return message;
             }
