@@ -115,12 +115,14 @@ namespace MongolianBarbecue
             var filter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
             {
                 {Fields.DestinationQueueName, QueueName},
-                {Fields.ReceiveTime, receiveTimeCriteria}
+                {Fields.ReceiveTime, receiveTimeCriteria},
+                {Fields.DeliveryAttempts, new BsonDocument {{"$lt", _config.MaxDeliveryAttempts}}},
             });
 
             var update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument
             {
-                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.UtcNow}}}
+                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.UtcNow}}},
+                {"$inc", new BsonDocument {{Fields.DeliveryAttempts, 1}}}
             });
 
             var options = new FindOneAndUpdateOptions<BsonDocument>

@@ -51,6 +51,7 @@ namespace MongolianBarbecue
                     {"_id", id},
                     {Fields.DestinationQueueName, destinationQueueName},
                     {Fields.SendTime, DateTime.UtcNow},
+                    {Fields.DeliveryAttempts, 0},
                     {Fields.ReceiveTime, DateTime.MinValue},
                     {Fields.Headers, headers},
                     {Fields.Body, BsonBinaryData.Create(message.Body)}

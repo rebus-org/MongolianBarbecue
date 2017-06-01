@@ -23,11 +23,16 @@ namespace MongolianBarbecue
         public const int DefaultMaxParallelism = 20;
 
         /// <summary>
+        /// Indicates the default max number of delivery attempts for each message
+        /// </summary>
+        public const int DefaultMaxDeliveryAttempts = 5;
+
+        /// <summary>
         /// Creates the configuration using the given MongoDB URL (which must contain a database name) and <paramref name="collectionName"/>.
         /// Optionally specifies the default lease time in seconds by setting <paramref name="defaultMessageLeaseSeconds"/> (default is <see cref="DefaultMessageLeaseSeconds"/>).
         /// Optionally specifies the default max parallelism by setting <paramref name="maxParallelism"/> (default is <see cref="DefaultMaxParallelism"/>).
         /// </summary>
-        public Config(MongoUrl mongoUrl, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism)
+        public Config(MongoUrl mongoUrl, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism, int maxDeliveryAttempts = DefaultMaxDeliveryAttempts)
         {
             if (mongoUrl == null) throw new ArgumentNullException(nameof(mongoUrl));
 
@@ -41,10 +46,16 @@ namespace MongolianBarbecue
                 throw new ArgumentOutOfRangeException(nameof(defaultMessageLeaseSeconds), defaultMessageLeaseSeconds, "Please specify a positive number of seconds for the lease duration");
             }
 
+            if (maxDeliveryAttempts <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDeliveryAttempts), maxDeliveryAttempts, "Please specify a positions number for the number of delivery attempts to accept for each message");
+            }
+
             var mongoDatabase = new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName);
 
             Collection = InitializeCollection(collectionName, mongoDatabase);
             MaxParallelism = maxParallelism;
+            MaxDeliveryAttempts = maxDeliveryAttempts;
             DefaultMessageLease = TimeSpan.FromSeconds(defaultMessageLeaseSeconds);
         }
 
@@ -53,17 +64,24 @@ namespace MongolianBarbecue
         /// Optionally specifies the default lease time in seconds by setting <paramref name="defaultMessageLeaseSeconds"/> (default is <see cref="DefaultMessageLeaseSeconds"/>).
         /// Optionally specifies the default max parallelism by setting <paramref name="maxParallelism"/> (default is <see cref="DefaultMaxParallelism"/>).
         /// </summary>
-        public Config(IMongoDatabase database, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism)
+        public Config(IMongoDatabase database, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism, int maxDeliveryAttempts = DefaultMaxDeliveryAttempts)
         {
             if (database == null) throw new ArgumentNullException(nameof(database));
+
             if (defaultMessageLeaseSeconds <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(defaultMessageLeaseSeconds), defaultMessageLeaseSeconds, "Please specify a positive number of seconds for the lease duration");
             }
 
+            if (maxDeliveryAttempts <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxDeliveryAttempts), maxDeliveryAttempts, "Please specify a positions number for the number of delivery attempts to accept for each message");
+            }
+
             MaxParallelism = maxParallelism;
             Collection = InitializeCollection(collectionName, database);
             DefaultMessageLease = TimeSpan.FromSeconds(defaultMessageLeaseSeconds);
+            MaxDeliveryAttempts = maxDeliveryAttempts;
         }
 
         static IMongoCollection<BsonDocument> InitializeCollection(string collectionName, IMongoDatabase mongoDatabase)
@@ -73,6 +91,7 @@ namespace MongolianBarbecue
             {
                 {Fields.DestinationQueueName, 1},
                 {Fields.ReceiveTime, 1},
+                {Fields.DeliveryAttempts, 1},
             };
             collection.Indexes.CreateOne(new BsonDocumentIndexKeysDefinition<BsonDocument>(index));
             return collection;
@@ -91,6 +110,8 @@ namespace MongolianBarbecue
         internal IMongoCollection<BsonDocument> Collection { get; }
 
         internal int MaxParallelism { get; }
+
+        internal int MaxDeliveryAttempts { get; }
 
         internal TimeSpan DefaultMessageLease { get; }
     }
