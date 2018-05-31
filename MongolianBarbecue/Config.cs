@@ -28,35 +28,23 @@ namespace MongolianBarbecue
         public const int DefaultMaxDeliveryAttempts = 5;
 
         /// <summary>
-        /// Creates the configuration using the given MongoDB URL (which must contain a database name) and <paramref name="collectionName"/>.
+        /// Creates the configuration using the given MongoDB URL (which MUST contain a database name) and <paramref name="collectionName"/>.
         /// Optionally specifies the default lease time in seconds by setting <paramref name="defaultMessageLeaseSeconds"/> (default is <see cref="DefaultMessageLeaseSeconds"/>).
         /// Optionally specifies the default max parallelism by setting <paramref name="maxParallelism"/> (default is <see cref="DefaultMaxParallelism"/>).
         /// </summary>
         public Config(MongoUrl mongoUrl, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism, int maxDeliveryAttempts = DefaultMaxDeliveryAttempts)
+            : this(mongoUrl.GetMongoDatabase(), collectionName, defaultMessageLeaseSeconds, maxParallelism, maxDeliveryAttempts)
         {
-            if (mongoUrl == null) throw new ArgumentNullException(nameof(mongoUrl));
+        }
 
-            if (string.IsNullOrWhiteSpace(mongoUrl.DatabaseName))
-            {
-                throw new ArgumentException("The MongoDB URL does not contain a database name");
-            }
-
-            if (defaultMessageLeaseSeconds <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(defaultMessageLeaseSeconds), defaultMessageLeaseSeconds, "Please specify a positive number of seconds for the lease duration");
-            }
-
-            if (maxDeliveryAttempts <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxDeliveryAttempts), maxDeliveryAttempts, "Please specify a positions number for the number of delivery attempts to accept for each message");
-            }
-
-            var mongoDatabase = new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName);
-
-            Collection = InitializeCollection(collectionName, mongoDatabase);
-            MaxParallelism = maxParallelism;
-            MaxDeliveryAttempts = maxDeliveryAttempts;
-            DefaultMessageLease = TimeSpan.FromSeconds(defaultMessageLeaseSeconds);
+        /// <summary>
+        /// Creates the configuration using the given MongoDB connection string (which MUST contain a database name) and <paramref name="collectionName"/>.
+        /// Optionally specifies the default lease time in seconds by setting <paramref name="defaultMessageLeaseSeconds"/> (default is <see cref="DefaultMessageLeaseSeconds"/>).
+        /// Optionally specifies the default max parallelism by setting <paramref name="maxParallelism"/> (default is <see cref="DefaultMaxParallelism"/>).
+        /// </summary>
+        public Config(string connectionString, string collectionName, int defaultMessageLeaseSeconds = DefaultMessageLeaseSeconds, int maxParallelism = DefaultMaxParallelism, int maxDeliveryAttempts = DefaultMaxDeliveryAttempts)
+            : this(connectionString.GetMongoDatabase(), collectionName, defaultMessageLeaseSeconds, maxParallelism, maxDeliveryAttempts)
+        {
         }
 
         /// <summary>
