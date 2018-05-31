@@ -76,7 +76,7 @@ The constructor of the configuration object accepts a couple of optional paramet
 
 By default, a message is made invisible for 60 seconds when it is received. If it is ACKed within that time, it is removed from the queue
 (i.e. it is deleted), but if that does not happen - e.g. if the consumer crashes & burns in a haze of `OutOfMemoryException`s and 
-`StackOverflowExceptions`s - then the message will automatically become visible to other consumer again, once the lease expires.
+`StackOverflowExceptions`s - then the message will automatically become visible to other consumers again, once the lease expires.
 
 If 60 seconds is not what you want, you can customize it like this:
 
