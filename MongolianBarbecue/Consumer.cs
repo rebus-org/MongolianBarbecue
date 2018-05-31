@@ -81,6 +81,31 @@ namespace MongolianBarbecue
             }
         }
 
+        public async Task Renew(string messageId)
+        {
+            var collection = _config.Collection;
+
+            var renewUpdate = new BsonDocument
+            {
+                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.UtcNow}}}
+            };
+
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                await collection.UpdateOneAsync(doc => doc["_id"] == messageId, new BsonDocumentUpdateDefinition<BsonDocument>(renewUpdate));
+            }
+            catch
+            {
+                // lease will be released eventually
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
         /// <summary>
         /// Gets whether a message with the given ID exists
         /// </summary>
@@ -148,7 +173,7 @@ namespace MongolianBarbecue
 
                 var id = document["_id"].AsString;
 
-                var message = new ReceivedMessage(headers, body, () => Ack(id), () => Nack(id));
+                var message = new ReceivedMessage(headers, body, () => Ack(id), () => Nack(id), () => Renew(id));
 
                 return message;
             }

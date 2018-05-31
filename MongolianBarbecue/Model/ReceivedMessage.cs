@@ -12,14 +12,16 @@ namespace MongolianBarbecue.Model
     {
         readonly Func<Task> _ack;
         readonly Func<Task> _nack;
+        readonly Func<Task> _renew;
 
         /// <summary>
         /// Creates the message
         /// </summary>
-        public ReceivedMessage(Dictionary<string, string> headers, byte[] body, Func<Task> ack, Func<Task> nack) : base(headers, body)
+        public ReceivedMessage(Dictionary<string, string> headers, byte[] body, Func<Task> ack, Func<Task> nack, Func<Task> renew) : base(headers, body)
         {
             _ack = ack ?? throw new ArgumentNullException(nameof(ack));
             _nack = nack ?? throw new ArgumentNullException(nameof(nack));
+            _renew = renew ?? throw new ArgumentNullException(nameof(renew));
 
             if (!headers.TryGetValue(Fields.MessageId, out var messageId))
             {
@@ -43,5 +45,11 @@ namespace MongolianBarbecue.Model
         /// NACKs the message (making it visible again to other consumers)
         /// </summary>
         public Task Nack() => _nack();
+
+        /// <summary>
+        /// Renews the lease for this message, prolonging the time it stays invisible to other consumers
+        /// </summary>
+        /// <returns></returns>
+        public Task Renew() => _renew();
     }
 }
