@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
+using MongoDB.Driver;
+using MongolianBarbecue.Exceptions;
 using MongolianBarbecue.Internals;
 using MongolianBarbecue.Model;
 
@@ -56,6 +58,10 @@ namespace MongolianBarbecue
                     {Fields.Headers, headers},
                     {Fields.Body, BsonBinaryData.Create(message.Body)}
                 });
+            }
+            catch (MongoWriteException exception) when (exception.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                throw new UniqueMessageIdViolationException(id);
             }
             finally
             {

@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="mongodb.driver" Version="2.4.3"/>
+    <PackageReference Include="mongodb.driver" Version="2.4.3" />
   </ItemGroup>
 
 </Project>

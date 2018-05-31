@@ -110,7 +110,9 @@ namespace MongolianBarbecue
         /// </summary>
         public async Task<ReceivedMessage> GetNextAsync()
         {
-            var receiveTimeCriteria = new BsonDocument { { "$lt", DateTime.UtcNow.Subtract(_config.DefaultMessageLease) } };
+            var now = DateTime.UtcNow;
+
+            var receiveTimeCriteria = new BsonDocument { { "$lt", now.Subtract(_config.DefaultMessageLease) } };
 
             var filter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
             {
@@ -121,7 +123,7 @@ namespace MongolianBarbecue
 
             var update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument
             {
-                {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.UtcNow}}},
+                {"$set", new BsonDocument {{Fields.ReceiveTime, now}}},
                 {"$inc", new BsonDocument {{Fields.DeliveryAttempts, 1}}}
             });
 
