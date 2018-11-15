@@ -44,7 +44,7 @@ namespace MongolianBarbecue
 
             try
             {
-                await collection.DeleteOneAsync(doc => doc["_id"] == messageId);
+                var deleteResult = await collection.DeleteOneAsync(doc => doc["_id"] == messageId);
             }
             finally
             {
