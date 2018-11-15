@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net45;netstandard16;netstandard20</TargetFrameworks>
+    <TargetFrameworks>net45;net46;netstandard20</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -12,10 +12,6 @@
     <PackageTags>mongodb message-queue queue messaging</PackageTags>
     <RepositoryUrl>https://github.com/rebus-org/MongolianBarbecue</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard20' OR '$(TargetFramework)'=='net45'">
-  	<DefineConstants>HAS_SERIALIZABLE_ATTRIBUTE;HAS_APPDOMAINS</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
