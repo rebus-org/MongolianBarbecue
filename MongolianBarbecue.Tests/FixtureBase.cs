@@ -9,6 +9,15 @@ namespace MongolianBarbecue.Tests
 {
     public abstract class FixtureBase
     {
+        static readonly MongoUrl MongoUrl;
+
+        static FixtureBase()
+        {
+            var connectionString = $"mongodb://localhost/mongobbq-{DateTime.Now.GetHashCode()%10000}";
+            
+            MongoUrl = new MongoUrl(connectionString);
+        }
+
         static readonly TableFormatter Formatter = new TableFormatter(new Hints { CollapseVerticallyWhenSingleLine = true });
 
         protected void PrintTable(IEnumerable objects)
@@ -18,13 +27,13 @@ namespace MongolianBarbecue.Tests
 
         protected IMongoDatabase GetCleanTestDatabase()
         {
-            var mongoUrl = new MongoUrl("mongodb://localhost/mongolian-barbecue-test");
+            Console.WriteLine($"Getting clean test database at '{MongoUrl}'");
 
-            var mongoClient = new MongoClient(mongoUrl);
+            var mongoClient = new MongoClient(MongoUrl);
 
-            mongoClient.DropDatabase(mongoUrl.DatabaseName);
+            mongoClient.DropDatabase(MongoUrl.DatabaseName);
 
-            var database = mongoClient.GetDatabase(mongoUrl.DatabaseName);
+            var database = mongoClient.GetDatabase(MongoUrl.DatabaseName);
 
             return database;
         }
