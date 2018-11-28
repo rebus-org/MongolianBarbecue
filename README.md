@@ -10,7 +10,9 @@ Let's say we have a MongoDB instance running on `MONGOBONGO01`, and we want to u
 
 The MongoDB connection string looks like this: `mongodb://MONGOBONGO01/Readme`, so we simply
 
-	var config = new Config("mongodb://MONGOBONGO01/Readme", "messages");
+```csharp
+var config = new Config("mongodb://MONGOBONGO01/Readme", "messages");
+```
 
 to create a configuration that uses the `messages` collection for exchanging messages.
 
@@ -22,13 +24,17 @@ to create a configuration that uses the `messages` collection for exchanging mes
 
 Grab the configuration from before and get a producer from it:
 
-	var producer = config.CreateProducer();
+```csharp
+var producer = config.CreateProducer();
+```
 
 and then send a byte array payload to `queue-a` like this:
 
-	var payload = new byte[] { 0xC0, 0xFF, 0x33, 0xBA, 0xDA, 0x55 };
+```csharp
+var payload = new byte[] { 0xC0, 0xFF, 0x33, 0xBA, 0xDA, 0x55 };
 
-	await producer.SendAsync("queue-a", new Message(payload));
+await producer.SendAsync("queue-a", new Message(payload));
+```
 
 :clap:
 
@@ -38,31 +44,35 @@ and then send a byte array payload to `queue-a` like this:
 
 Go back to the configuration from before and get a consumer from it:
 
-	var consumer = config.CreateConsumer("queue-a");
+```csharp
+var consumer = config.CreateConsumer("queue-a");
+```
 
 and then receive the next message (or null if none was to be found) like this:
 
-	var message = await consumer.GetNextAsync();
+```csharp
+var message = await consumer.GetNextAsync();
 
-	if (message != null) 
+if (message != null) 
+{
+	// we got a message - handle it here:
+
+	try
 	{
-		// we got a message - handle it here:
-
-		try
-		{
-			await HandleItSomehow(message);
-			
-			// acknowledge it (i.e. delete the message)
-			await message.Ack();
-		}
-		catch(Exception exception) 
-		{
-			// try to return message immediately (don't worry if this fails - the lease will eventually expire)
-			await message.Nack();
-
-			throw;
-		}
+		await HandleItSomehow(message);
+		
+		// acknowledge it (i.e. delete the message)
+		await message.Ack();
 	}
+	catch(Exception exception) 
+	{
+		// try to return message immediately (don't worry if this fails - the lease will eventually expire)
+		await message.Nack();
+
+		throw;
+	}
+}
+```
 
 :ok_hand:
 
@@ -80,7 +90,9 @@ By default, a message is made invisible for 60 seconds when it is received. If i
 
 If 60 seconds is not what you want, you can customize it like this:
 
-    var config = new Config(..., ..., defaultMessageLeaseSeconds: 20);
+```csharp
+var config = new Config(..., ..., defaultMessageLeaseSeconds: 20);
+```
 
 to lower the lease timeout to 20 seconds.
 
@@ -90,6 +102,8 @@ The MongoDB driver does not seem to protect itself from connection pool depletio
 operations, so we may limit the number of concurrent operations per `Consumer` / `Producer` object instance by passing a value
 to the configuration object like this:
 
-    var config = new Config(..., ..., maxParallelism: 10);
+```csharp
+var config = new Config(..., ..., maxParallelism: 10);
+```
 
 The default value for "max parallelism" is 20.
