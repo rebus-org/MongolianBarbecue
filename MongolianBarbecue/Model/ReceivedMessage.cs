@@ -17,8 +17,9 @@ namespace MongolianBarbecue.Model
         /// <summary>
         /// Creates the message
         /// </summary>
-        public ReceivedMessage(Dictionary<string, string> headers, byte[] body, Func<Task> ack, Func<Task> nack, Func<Task> renew) : base(headers, body)
+        public ReceivedMessage(Dictionary<string, string> headers, byte[] body, Func<Task> ack, Func<Task> nack, Func<Task> renew, int deliveryCount) : base(headers, body)
         {
+            DeliveryCount = deliveryCount;
             _ack = ack ?? throw new ArgumentNullException(nameof(ack));
             _nack = nack ?? throw new ArgumentNullException(nameof(nack));
             _renew = renew ?? throw new ArgumentNullException(nameof(renew));
@@ -35,6 +36,13 @@ namespace MongolianBarbecue.Model
         /// Gets the message ID
         /// </summary>
         public string MessageId { get; }
+
+        /// <summary>
+        /// Gets how many times this message has been delivered to someone. Starts out as 0 (before the first delivery attempt),
+        /// and is then incremented on each delivery. This means that the first to receive a message gets to see the value 1,
+        /// and so on.
+        /// </summary>
+        public int DeliveryCount { get; }
 
         /// <summary>
         /// ACKs the message (deleting it from the underlying storage)

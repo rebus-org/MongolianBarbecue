@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using MongolianBarbecue.Model;
 using MongolianBarbecue.Tests.Extensions;
@@ -44,6 +45,45 @@ namespace MongolianBarbecue.Tests.Basic
             var receivedMessage = await _consumer.GetNextAsync();
 
             Assert.That(receivedMessage, Is.Null, $"Did not expect to receive the message after {ClearlyCustomizedNumberOfDeliveryAttempts} delivery attempts that were NACKed");
+        }
+
+        [Test]
+        public async Task TracksNumberOfDeliveryAttempts_StartsOutAs1()
+        {
+            await _producer.SendAsync(QueueName, new Message(Encoding.UTF8.GetBytes("hej du")));
+
+            var receivedMessage = await _consumer.GetNextAsync();
+
+            Assert.That(receivedMessage.DeliveryCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task TracksNumberOfDeliveryAttempts()
+        {
+            await _producer.SendAsync(QueueName, new Message(Encoding.UTF8.GetBytes("hej du")));
+
+            await (await _consumer.GetNextAsync()).Nack();
+            await (await _consumer.GetNextAsync()).Nack();
+            await (await _consumer.GetNextAsync()).Nack();
+
+            var receivedMessage = await _consumer.GetNextAsync();
+
+            Assert.That(receivedMessage.DeliveryCount, Is.EqualTo(4));
+        }
+
+        [Test]
+        public async Task TracksNumberOfDeliveryAttempts_StartsOutAs0WhenLoading()
+        {
+            var headers = new Dictionary<string, string>
+            {
+                {"id", "known-message-id"}
+            };
+            var message = new Message(headers, Encoding.UTF8.GetBytes("hej du"));
+            await _producer.SendAsync(QueueName, message);
+
+            var loadedMessage = await _consumer.LoadAsync("known-message-id");
+
+            Assert.That(loadedMessage.DeliveryCount, Is.EqualTo(0));
         }
     }
 }

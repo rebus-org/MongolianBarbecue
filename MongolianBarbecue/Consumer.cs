@@ -6,6 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongolianBarbecue.Internals;
 using MongolianBarbecue.Model;
+// ReSharper disable ArgumentsStyleAnonymousFunction
 
 namespace MongolianBarbecue
 {
@@ -131,6 +132,34 @@ namespace MongolianBarbecue
         }
 
         /// <summary>
+        /// Loads the message with the given <paramref name="messageId"/>, returning null if it doesn't exist.
+        /// </summary>
+        public async Task<ReceivedMessage> LoadAsync(string messageId)
+        {
+            if (messageId == null) throw new ArgumentNullException(nameof(messageId));
+
+            var collection = _config.Collection;
+
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                using (var cursor = await collection.FindAsync(d => d["_id"] == messageId))
+                {
+                    var document = await cursor.FirstOrDefaultAsync();
+
+                    if (document == null) return null;
+
+                    return GetReceivedMessage(document);
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        /// <summary>
         /// Gets the next available message or immediately returns null if no message was available
         /// </summary>
         public async Task<ReceivedMessage> GetNextAsync()
@@ -167,19 +196,40 @@ namespace MongolianBarbecue
 
                 if (document == null) return null;
 
+                return GetReceivedMessage(document);
+
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        ReceivedMessage GetReceivedMessage(BsonValue document)
+        {
+            try
+            {
                 var body = document[Fields.Body].AsByteArray;
+
                 var headers = document[Fields.Headers].AsBsonArray
                     .ToDictionary(value => value[Fields.Key].AsString, value => value[Fields.Value].AsString);
 
                 var id = document["_id"].AsString;
 
-                var message = new ReceivedMessage(headers, body, () => Ack(id), () => Nack(id), () => Renew(id));
+                var deliveryCount = document[Fields.DeliveryAttempts].AsInt32;
 
+                var message = new ReceivedMessage(
+                    headers: headers, body: body,
+                    ack: () => Ack(id),
+                    nack: () => Nack(id),
+                    renew: () => Renew(id),
+                    deliveryCount: deliveryCount
+                );
                 return message;
             }
-            finally
+            catch (Exception exception)
             {
-                _semaphore.Release();
+                throw new FormatException($"Could not read received BSON document: {document}", exception);
             }
         }
     }
