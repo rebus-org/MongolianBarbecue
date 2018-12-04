@@ -13,7 +13,7 @@ at open source. Everyone has to start somewhere, right?
 
 Here's how you would ideally do it if you were to contribute to Rebus:
 
-* Pick an [issue](https://github.com/rebus-org/Rebus/issues) you're interested in doing,
+* Pick an [issue](https://github.com/rebus-org/MongolianBarbecue/issues) you're interested in doing,
   or dream up something yourself that you feel is missing.
 * If you talk to me first (either via comments on the issue or by email), I
   will guarantee that your contribution is accepted.
@@ -21,7 +21,7 @@ Here's how you would ideally do it if you were to contribute to Rebus:
 
 ### Here's how you create a pull request/PR
 
-* Fork Rebus ([Fork A Repo @ GitHub docs](https://help.github.com/articles/fork-a-repo/))
+* Fork Mongolian Barbecue ([Fork A Repo @ GitHub docs](https://help.github.com/articles/fork-a-repo/))
 * Clone your fork ([Cloning A Repository @ GitHub docs](https://help.github.com/articles/cloning-a-repository/))
 * Make changes to your local copy (e.g. `git commit -am"bam!!!11"` - check [this](https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository) out for more info)
 * Push your local changes to your fork ([Pushing To A Remote @ GitHub docs](https://help.github.com/articles/pushing-to-a-remote/))
