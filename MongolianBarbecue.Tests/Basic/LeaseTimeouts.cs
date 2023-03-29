@@ -5,109 +5,108 @@ using NUnit.Framework;
 // ReSharper disable ArgumentsStyleLiteral
 // ReSharper disable ArgumentsStyleNamedExpression
 
-namespace MongolianBarbecue.Tests.Basic
+namespace MongolianBarbecue.Tests.Basic;
+
+[TestFixture]
+public class LeaseTimeouts : FixtureBase
 {
-    [TestFixture]
-    public class LeaseTimeouts : FixtureBase
+    const string QueueName = "destination-queue";
+    const int DefaultMessageLeaseSeconds = 3;
+    const int ExtraDelay = 1;
+
+    Producer _producer;
+    Consumer _consumer;
+
+    protected override void SetUp()
     {
-        const string QueueName = "destination-queue";
-        const int DefaultMessageLeaseSeconds = 3;
-        const int ExtraDelay = 1;
+        var database = GetCleanTestDatabase();
 
-        Producer _producer;
-        Consumer _consumer;
+        var config = new Config(database, "messages", defaultMessageLeaseSeconds: DefaultMessageLeaseSeconds);
+        _producer = new Producer(config);
+        _consumer = new Consumer(config, QueueName);
+    }
 
-        protected override void SetUp()
-        {
-            var database = GetCleanTestDatabase();
+    [Test]
+    public async Task GetsTheSameMessageAgainWhenLeaseExpires()
+    {
+        var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+        await _producer.SendAsync(QueueName, new Message(valuablePayload));
 
-            var config = new Config(database, "messages", defaultMessageLeaseSeconds: DefaultMessageLeaseSeconds);
-            _producer = new Producer(config);
-            _consumer = new Consumer(config, QueueName);
-        }
+        var messageReceivedFirstTime = await _consumer.GetNextAsync();
 
-        [Test]
-        public async Task GetsTheSameMessageAgainWhenLeaseExpires()
-        {
-            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
-            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+        await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
 
-            var messageReceivedFirstTime = await _consumer.GetNextAsync();
+        var messageReceivedSecondTime = await _consumer.GetNextAsync();
 
-            await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
+        Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+        Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
+    }
 
-            var messageReceivedSecondTime = await _consumer.GetNextAsync();
+    [Test]
+    public async Task DoesNotGetTheSameMessageAgainWhenLeaseExpiresIfTheMessageWasAcked()
+    {
+        var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+        await _producer.SendAsync(QueueName, new Message(valuablePayload));
 
-            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
-            Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
-        }
+        var messageReceivedFirstTime = await _consumer.GetNextAsync();
+        await messageReceivedFirstTime.Ack();
 
-        [Test]
-        public async Task DoesNotGetTheSameMessageAgainWhenLeaseExpiresIfTheMessageWasAcked()
-        {
-            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
-            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+        await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
 
-            var messageReceivedFirstTime = await _consumer.GetNextAsync();
-            await messageReceivedFirstTime.Ack();
+        var messageReceivedSecondTime = await _consumer.GetNextAsync();
 
-            await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
+        Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+        Assert.That(messageReceivedSecondTime, Is.Null);
+    }
 
-            var messageReceivedSecondTime = await _consumer.GetNextAsync();
+    [Test]
+    public async Task GetsTheSameMessageAgainBeforeLeaseExpiresIfTheMessageWasNacked()
+    {
+        var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+        await _producer.SendAsync(QueueName, new Message(valuablePayload));
 
-            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
-            Assert.That(messageReceivedSecondTime, Is.Null);
-        }
+        var messageReceivedFirstTime = await _consumer.GetNextAsync();
+        await messageReceivedFirstTime.Nack();
 
-        [Test]
-        public async Task GetsTheSameMessageAgainBeforeLeaseExpiresIfTheMessageWasNacked()
-        {
-            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
-            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+        var messageReceivedSecondTime = await _consumer.GetNextAsync();
 
-            var messageReceivedFirstTime = await _consumer.GetNextAsync();
-            await messageReceivedFirstTime.Nack();
+        Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+        Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
+    }
 
-            var messageReceivedSecondTime = await _consumer.GetNextAsync();
+    [Test]
+    public async Task DoesNotGetTheSameMessageAgainWhenLeaseExpiresIfTheMessageWasAckedUsingSeparateFunction()
+    {
+        var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+        await _producer.SendAsync(QueueName, new Message(valuablePayload));
 
-            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
-            Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
-        }
+        var messageReceivedFirstTime = await _consumer.GetNextAsync();
+        var messageId = messageReceivedFirstTime.MessageId;
 
-        [Test]
-        public async Task DoesNotGetTheSameMessageAgainWhenLeaseExpiresIfTheMessageWasAckedUsingSeparateFunction()
-        {
-            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
-            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+        await _consumer.Ack(messageId);
 
-            var messageReceivedFirstTime = await _consumer.GetNextAsync();
-            var messageId = messageReceivedFirstTime.MessageId;
+        await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
 
-            await _consumer.Ack(messageId);
+        var messageReceivedSecondTime = await _consumer.GetNextAsync();
 
-            await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
+        Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+        Assert.That(messageReceivedSecondTime, Is.Null);
+    }
 
-            var messageReceivedSecondTime = await _consumer.GetNextAsync();
+    [Test]
+    public async Task GetsTheSameMessageAgainBeforeLeaseExpiresIfTheMessageWasNackedUsingSeparateFunction()
+    {
+        var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
+        await _producer.SendAsync(QueueName, new Message(valuablePayload));
 
-            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
-            Assert.That(messageReceivedSecondTime, Is.Null);
-        }
+        var messageReceivedFirstTime = await _consumer.GetNextAsync();
+        var messageId = messageReceivedFirstTime.MessageId;
 
-        [Test]
-        public async Task GetsTheSameMessageAgainBeforeLeaseExpiresIfTheMessageWasNackedUsingSeparateFunction()
-        {
-            var valuablePayload = new byte[] { 0xBA, 0xDA, 0x55, 0xC0, 0xFF, 0x33 };
-            await _producer.SendAsync(QueueName, new Message(valuablePayload));
+        await _consumer.Nack(messageId);
 
-            var messageReceivedFirstTime = await _consumer.GetNextAsync();
-            var messageId = messageReceivedFirstTime.MessageId;
+        var messageReceivedSecondTime = await _consumer.GetNextAsync();
 
-            await _consumer.Nack(messageId);
-
-            var messageReceivedSecondTime = await _consumer.GetNextAsync();
-
-            Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
-            Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
-        }
+        Assert.That(messageReceivedFirstTime.Body, Is.EqualTo(valuablePayload));
+        Assert.That(messageReceivedSecondTime.Body, Is.EqualTo(valuablePayload));
     }
 }

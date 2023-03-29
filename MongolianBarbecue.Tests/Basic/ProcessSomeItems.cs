@@ -5,82 +5,81 @@ using System.Threading.Tasks;
 using MongolianBarbecue.Model;
 using NUnit.Framework;
 
-namespace MongolianBarbecue.Tests.Basic
+namespace MongolianBarbecue.Tests.Basic;
+
+[TestFixture]
+public class ProcessSomeItems : FixtureBase
 {
-    [TestFixture]
-    public class ProcessSomeItems : FixtureBase
+    const string QueueName = "destination-queue";
+
+    Producer _producer;
+    Consumer _consumer;
+
+    protected override void SetUp()
     {
-        const string QueueName = "destination-queue";
+        var database = GetCleanTestDatabase();
 
-        Producer _producer;
-        Consumer _consumer;
+        var config = new Config(database, "messages");
+        _producer = new Producer(config);
+        _consumer = new Consumer(config, QueueName);
+    }
 
-        protected override void SetUp()
+    [Test]
+    public async Task QueueStartsOutEmpty()
+    {
+        Assert.That(await _consumer.GetNextAsync(), Is.Null);
+    }
+
+    [Test]
+    public async Task CanSendSingleItem()
+    {
+        await _producer.SendAsync(QueueName, new Message(new byte[] { 1, 2, 3 }));
+
+        var message = await _consumer.GetNextAsync();
+
+        Assert.That(message, Is.Not.Null);
+        Assert.That(message.Body, Is.EqualTo(new byte[] { 1, 2, 3 }));
+    }
+
+    [Test]
+    public async Task DoesNotReceiveSameItemAgain()
+    {
+        await _producer.SendAsync(QueueName, new Message(new byte[] { 1, 2, 3 }));
+
+        await _consumer.GetNextAsync();
+
+        var message = await _consumer.GetNextAsync();
+
+        Assert.That(message, Is.Null);
+    }
+
+
+    [TestCase(3000)]
+    public async Task MoreMessages(int count)
+    {
+        var strings = Enumerable.Range(0, count)
+            .Select(i => $"This is message {i:0000000}")
+            .ToList();
+
+        await Task.WhenAll(strings
+            .Select(str => _producer.SendAsync(QueueName, new Message(Encoding.UTF8.GetBytes(str)))));
+
+        var receivedStrings = new List<string>();
+
+        while (true)
         {
-            var database = GetCleanTestDatabase();
+            var nextMessage = await _consumer.GetNextAsync();
 
-            var config = new Config(database, "messages");
-            _producer = new Producer(config);
-            _consumer = new Consumer(config, QueueName);
+            if (nextMessage == null) break;
+
+            receivedStrings.Add(Encoding.UTF8.GetString(nextMessage.Body));
+
+            await nextMessage.Ack();
         }
 
-        [Test]
-        public async Task QueueStartsOutEmpty()
-        {
-            Assert.That(await _consumer.GetNextAsync(), Is.Null);
-        }
+        strings.Sort();
+        receivedStrings.Sort();
 
-        [Test]
-        public async Task CanSendSingleItem()
-        {
-            await _producer.SendAsync(QueueName, new Message(new byte[] { 1, 2, 3 }));
-
-            var message = await _consumer.GetNextAsync();
-
-            Assert.That(message, Is.Not.Null);
-            Assert.That(message.Body, Is.EqualTo(new byte[] { 1, 2, 3 }));
-        }
-
-        [Test]
-        public async Task DoesNotReceiveSameItemAgain()
-        {
-            await _producer.SendAsync(QueueName, new Message(new byte[] { 1, 2, 3 }));
-
-            await _consumer.GetNextAsync();
-
-            var message = await _consumer.GetNextAsync();
-
-            Assert.That(message, Is.Null);
-        }
-
-
-        [TestCase(3000)]
-        public async Task MoreMessages(int count)
-        {
-            var strings = Enumerable.Range(0, count)
-                .Select(i => $"This is message {i:0000000}")
-                .ToList();
-
-            await Task.WhenAll(strings
-                .Select(str => _producer.SendAsync(QueueName, new Message(Encoding.UTF8.GetBytes(str)))));
-
-            var receivedStrings = new List<string>();
-
-            while (true)
-            {
-                var nextMessage = await _consumer.GetNextAsync();
-
-                if (nextMessage == null) break;
-
-                receivedStrings.Add(Encoding.UTF8.GetString(nextMessage.Body));
-
-                await nextMessage.Ack();
-            }
-
-            strings.Sort();
-            receivedStrings.Sort();
-
-            Assert.That(receivedStrings, Is.EqualTo(strings));
-        }
+        Assert.That(receivedStrings, Is.EqualTo(strings));
     }
 }

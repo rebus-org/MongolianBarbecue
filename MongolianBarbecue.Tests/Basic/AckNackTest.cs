@@ -4,41 +4,40 @@ using System.Threading.Tasks;
 using MongolianBarbecue.Model;
 using NUnit.Framework;
 
-namespace MongolianBarbecue.Tests.Basic
+namespace MongolianBarbecue.Tests.Basic;
+
+[TestFixture]
+public class AckNackTest : FixtureBase
 {
-    [TestFixture]
-    public class AckNackTest : FixtureBase
+    Producer _producer;
+    Config _config;
+
+    protected override void SetUp()
     {
-        Producer _producer;
-        Config _config;
+        var database = GetCleanTestDatabase();
 
-        protected override void SetUp()
-        {
-            var database = GetCleanTestDatabase();
+        _config = new Config(database, "messages");
+        _producer = new Producer(_config);
+    }
 
-            _config = new Config(database, "messages");
-            _producer = new Producer(_config);
-        }
+    [Test]
+    [Ignore("should probably be like this, but it isn't right now")]
+    public async Task CannotAckMessageFromAnotherConsumer()
+    {
+        await _producer.SendAsync("queue-a", NewMessage());
+        var receivedMessage = await _config.CreateConsumer("queue-a").GetNextAsync();
+        var messageId = receivedMessage.MessageId;
 
-        [Test]
-        [Ignore("should probably be like this, but it isn't right now")]
-        public async Task CannotAckMessageFromAnotherConsumer()
-        {
-            await _producer.SendAsync("queue-a", NewMessage());
-            var receivedMessage = await _config.CreateConsumer("queue-a").GetNextAsync();
-            var messageId = receivedMessage.MessageId;
-
-            var anotherConsumer = _config.CreateConsumer("queue-b");
+        var anotherConsumer = _config.CreateConsumer("queue-b");
             
-            var invalidOperationException = Assert.ThrowsAsync<InvalidOperationException>(() => anotherConsumer.Ack(messageId));
+        var invalidOperationException = Assert.ThrowsAsync<InvalidOperationException>(() => anotherConsumer.Ack(messageId));
 
-            Console.WriteLine(invalidOperationException);
-        }
+        Console.WriteLine(invalidOperationException);
+    }
 
-        static Message NewMessage()
-        {
-            var bytes = new byte[] { 1, 2, 3 };
-            return new Message(bytes);
-        }
+    static Message NewMessage()
+    {
+        var bytes = new byte[] { 1, 2, 3 };
+        return new Message(bytes);
     }
 }

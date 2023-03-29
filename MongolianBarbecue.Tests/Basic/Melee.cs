@@ -5,60 +5,59 @@ using MongolianBarbecue.Model;
 using MongolianBarbecue.Tests.Extensions;
 using NUnit.Framework;
 
-namespace MongolianBarbecue.Tests.Basic
+namespace MongolianBarbecue.Tests.Basic;
+
+[TestFixture]
+public class Melee : FixtureBase
 {
-    [TestFixture]
-    public class Melee : FixtureBase
+    Producer _producer;
+    Config _config;
+
+    protected override void SetUp()
     {
-        Producer _producer;
-        Config _config;
+        var database = GetCleanTestDatabase();
 
-        protected override void SetUp()
+        _config = new Config(database, "messages");
+        _producer = new Producer(_config);
+    }
+
+    [TestCase(10000, 10)]
+    public async Task WreakHavoc(int count, int queues)
+    {
+        var stopwatch = new BetterStopwatch();
+
+        var strings = Enumerable.Range(0, count)
+            .Select(n => $"MESSAGE {n}")
+            .ToList();
+
+        var queueNames = Enumerable.Range(0, queues).Select(n => $"queue-{n}").ToList();
+
+        stopwatch.RecordLap("Setting up data");
+
+        await Task.WhenAll(strings.Select(str =>
         {
-            var database = GetCleanTestDatabase();
+            var destinationQueueName = queueNames.RandomItem();
+            var message = new Message(Encoding.UTF8.GetBytes(str));
+            return _producer.SendAsync(destinationQueueName, message);
+        }));
 
-            _config = new Config(database, "messages");
-            _producer = new Producer(_config);
-        }
+        stopwatch.RecordLap("Sending messages", count);
 
-        [TestCase(10000, 10)]
-        public async Task WreakHavoc(int count, int queues)
-        {
-            var stopwatch = new BetterStopwatch();
+        var tasks = queueNames.Select(_config.GetAllMessagesFrom).ToArray();
 
-            var strings = Enumerable.Range(0, count)
-                .Select(n => $"MESSAGE {n}")
-                .ToList();
+        await Task.WhenAll(tasks);
 
-            var queueNames = Enumerable.Range(0, queues).Select(n => $"queue-{n}").ToList();
+        stopwatch.RecordLap("Receiving messages", count);
 
-            stopwatch.RecordLap("Setting up data");
+        var allReceivedStrings = tasks
+            .SelectMany(t => t.Result.Select(m => Encoding.UTF8.GetString(m.Body)))
+            .ToList();
 
-            await Task.WhenAll(strings.Select(str =>
-            {
-                var destinationQueueName = queueNames.RandomItem();
-                var message = new Message(Encoding.UTF8.GetBytes(str));
-                return _producer.SendAsync(destinationQueueName, message);
-            }));
+        strings.Sort();
+        allReceivedStrings.Sort();
 
-            stopwatch.RecordLap("Sending messages", count);
+        PrintTable(stopwatch.Laps);
 
-            var tasks = queueNames.Select(_config.GetAllMessagesFrom).ToArray();
-
-            await Task.WhenAll(tasks);
-
-            stopwatch.RecordLap("Receiving messages", count);
-
-            var allReceivedStrings = tasks
-                .SelectMany(t => t.Result.Select(m => Encoding.UTF8.GetString(m.Body)))
-                .ToList();
-
-            strings.Sort();
-            allReceivedStrings.Sort();
-
-            PrintTable(stopwatch.Laps);
-
-            Assert.That(allReceivedStrings, Is.EqualTo(strings));
-        }
+        Assert.That(allReceivedStrings, Is.EqualTo(strings));
     }
 }

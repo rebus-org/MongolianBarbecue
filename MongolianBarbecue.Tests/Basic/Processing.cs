@@ -3,38 +3,37 @@ using System.Threading.Tasks;
 using MongolianBarbecue.Model;
 using NUnit.Framework;
 
-namespace MongolianBarbecue.Tests.Basic
+namespace MongolianBarbecue.Tests.Basic;
+
+[TestFixture]
+public class Processing : FixtureBase
 {
-    [TestFixture]
-    public class Processing : FixtureBase
+    const string QueueName = "nanomsg";
+
+    Producer _producer;
+    Consumer _consumer;
+
+    protected override void SetUp()
     {
-        const string QueueName = "nanomsg";
+        var database = GetCleanTestDatabase();
 
-        Producer _producer;
-        Consumer _consumer;
+        var config = new Config(database, "messages");
+        _producer = new Producer(config);
+        _consumer = new Consumer(config, QueueName);
+    }
 
-        protected override void SetUp()
-        {
-            var database = GetCleanTestDatabase();
+    [Test]
+    public async Task CanGetWhetherMessageExists()
+    {
+        var headers = new Dictionary<string, string> { { "id", "exists" } };
+        var message = new Message(headers, new byte[] {1, 2, 3});
 
-            var config = new Config(database, "messages");
-            _producer = new Producer(config);
-            _consumer = new Consumer(config, QueueName);
-        }
+        await _producer.SendAsync(QueueName,message);
 
-        [Test]
-        public async Task CanGetWhetherMessageExists()
-        {
-            var headers = new Dictionary<string, string> { { "id", "exists" } };
-            var message = new Message(headers, new byte[] {1, 2, 3});
+        var doesNotExistsExists = await _consumer.Exists("does-not-exist");
+        var existsExists = await _consumer.Exists("exists");
 
-            await _producer.SendAsync(QueueName,message);
-
-            var doesNotExistsExists = await _consumer.Exists("does-not-exist");
-            var existsExists = await _consumer.Exists("exists");
-
-            Assert.That(doesNotExistsExists, Is.False);
-            Assert.That(existsExists, Is.True);
-        }
+        Assert.That(doesNotExistsExists, Is.False);
+        Assert.That(existsExists, Is.True);
     }
 }
