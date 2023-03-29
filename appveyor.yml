@@ -1,4 +1,4 @@
-image: Visual Studio 2017
+image: Visual Studio 2022
 
 services:
   - mongodb
@@ -13,5 +13,7 @@ before_build:
   - appveyor-retry dotnet restore -v Minimal
 
 build_script:
-  - dotnet build MongolianBarbecue -c Release 
-  - dotnet build MongolianBarbecue.Tests -c Release 
+  - dotnet build -c Release --no-restore
+
+test_script:
+  - dotnet test -c Release --no-restore
