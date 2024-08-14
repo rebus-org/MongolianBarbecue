@@ -15,7 +15,7 @@
 		<DocumentationFile>bin\Release\$(TargetFramework)\MongolianBarbecue.xml</DocumentationFile>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="mongodb.driver" Version="2.19.1" />
+		<PackageReference Include="mongodb.driver" Version="2.28.0" />
 		<PackageReference Include="nito.asyncex" Version="5.1.2" />
 	</ItemGroup>
 </Project>

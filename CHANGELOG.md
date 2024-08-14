@@ -13,3 +13,6 @@
 * Update packages
 * Only target .NET Standard 2.0
 * Use `AsyncSemaphore` from Nito.Asyncex instead of `SemaphoreSlim`
+
+## 2.1.0
+* Update packages
