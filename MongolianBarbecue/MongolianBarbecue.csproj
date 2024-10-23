@@ -11,7 +11,19 @@
 		<RepositoryUrl>https://github.com/rebus-org/MongolianBarbecue</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<PackageIcon>logo2.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Include="..\artwork\logo2.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="mongodb.driver" Version="3.0.0" />
 		<PackageReference Include="nito.asyncex" Version="5.1.2" />

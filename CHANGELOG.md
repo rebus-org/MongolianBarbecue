@@ -22,3 +22,6 @@
 
 ## 3.0.1
 * Add missing comment
+
+## 3.0.2
+* Add Nuggie niceness
