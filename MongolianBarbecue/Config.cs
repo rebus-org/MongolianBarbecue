@@ -88,12 +88,12 @@ public class Config
     /// <summary>
     /// Creates a producer using the current configuration
     /// </summary>
-    public Producer CreateProducer() => new Producer(this);
+    public Producer CreateProducer() => new(this);
 
     /// <summary>
     /// Creates a consumer using the current configuration and the given <paramref name="queueName"/>
     /// </summary>
-    public Consumer CreateConsumer(string queueName) => new Consumer(this, queueName);
+    public Consumer CreateConsumer(string queueName) => new(this, queueName);
 
     internal IMongoCollection<BsonDocument> Collection { get; }
 

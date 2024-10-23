@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0</TargetFrameworks>
-		<LangVersion>11</LangVersion>
+		<TargetFrameworks>netstandard2.1;net4.7.2;net6.0</TargetFrameworks>
+		<LangVersion>12</LangVersion>
 	</PropertyGroup>
 	<PropertyGroup>
 		<Authors>mookid8000</Authors>
@@ -10,12 +10,10 @@
 		<PackageTags>mongodb message-queue queue messaging</PackageTags>
 		<RepositoryUrl>https://github.com/rebus-org/MongolianBarbecue</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)'=='Release'">
-		<DocumentationFile>bin\Release\$(TargetFramework)\MongolianBarbecue.xml</DocumentationFile>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="mongodb.driver" Version="2.28.0" />
+		<PackageReference Include="mongodb.driver" Version="3.0.0" />
 		<PackageReference Include="nito.asyncex" Version="5.1.2" />
 	</ItemGroup>
 </Project>

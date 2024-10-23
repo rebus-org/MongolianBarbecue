@@ -16,3 +16,6 @@
 
 ## 2.1.0
 * Update packages
+
+## 3.0.0
+* Update to v3 of MongoDB.Driver
