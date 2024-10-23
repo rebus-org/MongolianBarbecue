@@ -72,6 +72,9 @@ public class Consumer
         }
     }
 
+    /// <summary>
+    /// Renews the lease for the message with the given <paramref name="messageId"/>.
+    /// </summary>
     public async Task Renew(string messageId)
     {
         var collection = _config.Collection;
