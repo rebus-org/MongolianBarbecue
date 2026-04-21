@@ -25,3 +25,7 @@
 
 ## 3.0.2
 * Add Nuggie niceness
+
+## 4.0.0
+* Consistent *Async naming of methods
+* Update to mongodb.driver 3.8.0
