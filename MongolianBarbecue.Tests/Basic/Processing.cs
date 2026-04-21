@@ -30,8 +30,8 @@ public class Processing : FixtureBase
 
         await _producer.SendAsync(QueueName,message);
 
-        var doesNotExistsExists = await _consumer.Exists("does-not-exist");
-        var existsExists = await _consumer.Exists("exists");
+        var doesNotExistsExists = await _consumer.ExistsAsync("does-not-exist");
+        var existsExists = await _consumer.ExistsAsync("exists");
 
         Assert.That(doesNotExistsExists, Is.False);
         Assert.That(existsExists, Is.True);

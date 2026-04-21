@@ -30,7 +30,7 @@ public class AckNackTest : FixtureBase
 
         var anotherConsumer = _config.CreateConsumer("queue-b");
             
-        var invalidOperationException = Assert.ThrowsAsync<InvalidOperationException>(() => anotherConsumer.Ack(messageId));
+        var invalidOperationException = Assert.ThrowsAsync<InvalidOperationException>(() => anotherConsumer.AckAsync(messageId));
 
         Console.WriteLine(invalidOperationException);
     }

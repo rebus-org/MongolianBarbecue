@@ -83,7 +83,7 @@ public class LeaseTimeouts : FixtureBase
         var messageReceivedFirstTime = await _consumer.GetNextAsync();
         var messageId = messageReceivedFirstTime.MessageId;
 
-        await _consumer.Ack(messageId);
+        await _consumer.AckAsync(messageId);
 
         await Task.Delay(TimeSpan.FromSeconds(DefaultMessageLeaseSeconds + ExtraDelay));
 
@@ -102,7 +102,7 @@ public class LeaseTimeouts : FixtureBase
         var messageReceivedFirstTime = await _consumer.GetNextAsync();
         var messageId = messageReceivedFirstTime.MessageId;
 
-        await _consumer.Nack(messageId);
+        await _consumer.NackAsync(messageId);
 
         var messageReceivedSecondTime = await _consumer.GetNextAsync();
 

@@ -38,7 +38,7 @@ public class Consumer
     /// Acknowledges having processed the message with the given <paramref name="messageId"/>.
     /// This will delete the message document from the underlying MongoDB collection.
     /// </summary>
-    public async Task Ack(string messageId)
+    public async Task AckAsync(string messageId)
     {
         var collection = _config.Collection;
 
@@ -51,7 +51,7 @@ public class Consumer
     /// Abandons the lease for the message with the given <paramref name="messageId"/>.
     /// This will set the <see cref="Fields.ReceiveTime"/> field of the message document to <see cref="DateTime.MinValue"/>.
     /// </summary>
-    public async Task Nack(string messageId)
+    public async Task NackAsync(string messageId)
     {
         var collection = _config.Collection;
 
@@ -75,7 +75,7 @@ public class Consumer
     /// <summary>
     /// Renews the lease for the message with the given <paramref name="messageId"/>.
     /// </summary>
-    public async Task Renew(string messageId)
+    public async Task RenewAsync(string messageId)
     {
         var collection = _config.Collection;
 
@@ -99,7 +99,7 @@ public class Consumer
     /// <summary>
     /// Gets whether a message with the given ID exists
     /// </summary>
-    public async Task<bool> Exists(string messageId)
+    public async Task<bool> ExistsAsync(string messageId)
     {
         var collection = _config.Collection;
 
@@ -185,9 +185,9 @@ public class Consumer
 
             var message = new ReceivedMessage(
                 headers: headers, body: body,
-                ack: () => Ack(id),
-                nack: () => Nack(id),
-                renew: () => Renew(id),
+                ack: () => AckAsync(id),
+                nack: () => NackAsync(id),
+                renew: () => RenewAsync(id),
                 deliveryCount: deliveryCount
             );
             return message;
