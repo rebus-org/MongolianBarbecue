@@ -20,7 +20,7 @@ public static class ConfigExtensions
             if (message != null)
             {
                 messages.Add(message);
-                await message.Ack();
+                await message.AckAsync();
                 lastMessage = DateTime.UtcNow;
                 continue;
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using MongolianBarbecue.Internals;
 
@@ -10,14 +11,14 @@ namespace MongolianBarbecue.Model;
 /// </summary>
 public class ReceivedMessage : Message
 {
-    readonly Func<Task> _ack;
-    readonly Func<Task> _nack;
-    readonly Func<Task> _renew;
+    readonly Func<CancellationToken, Task> _ack;
+    readonly Func<CancellationToken, Task> _nack;
+    readonly Func<CancellationToken, Task> _renew;
 
     /// <summary>
     /// Creates the message
     /// </summary>
-    public ReceivedMessage(Dictionary<string, string> headers, byte[] body, Func<Task> ack, Func<Task> nack, Func<Task> renew, int deliveryCount) : base(headers, body)
+    public ReceivedMessage(Dictionary<string, string> headers, byte[] body, Func<CancellationToken, Task> ack, Func<CancellationToken, Task> nack, Func<CancellationToken, Task> renew, int deliveryCount) : base(headers, body)
     {
         DeliveryCount = deliveryCount;
         _ack = ack ?? throw new ArgumentNullException(nameof(ack));
@@ -47,16 +48,16 @@ public class ReceivedMessage : Message
     /// <summary>
     /// ACKs the message (deleting it from the underlying storage)
     /// </summary>
-    public Task Ack() => _ack();
+    public Task AckAsync(CancellationToken cancellationToken = default) => _ack(cancellationToken);
 
     /// <summary>
     /// NACKs the message (making it visible again to other consumers)
     /// </summary>
-    public Task Nack() => _nack();
+    public Task NackAsync(CancellationToken cancellationToken = default) => _nack(cancellationToken);
 
     /// <summary>
     /// Renews the lease for this message, prolonging the time it stays invisible to other consumers
     /// </summary>
     /// <returns></returns>
-    public Task Renew() => _renew();
+    public Task RenewAsync(CancellationToken cancellationToken = default) => _renew(cancellationToken);
 }

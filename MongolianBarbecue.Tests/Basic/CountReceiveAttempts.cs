@@ -39,7 +39,7 @@ public class CountReceiveAttempts : FixtureBase
                 throw new AssertionException("Did not expect to receive NULL this time!");
             }
 
-            await message.Nack();
+            await message.NackAsync();
         });
 
         var receivedMessage = await _consumer.GetNextAsync();
@@ -62,9 +62,9 @@ public class CountReceiveAttempts : FixtureBase
     {
         await _producer.SendAsync(QueueName, new Message(Encoding.UTF8.GetBytes("hej du")));
 
-        await (await _consumer.GetNextAsync()).Nack();
-        await (await _consumer.GetNextAsync()).Nack();
-        await (await _consumer.GetNextAsync()).Nack();
+        await (await _consumer.GetNextAsync()).NackAsync();
+        await (await _consumer.GetNextAsync()).NackAsync();
+        await (await _consumer.GetNextAsync()).NackAsync();
 
         var receivedMessage = await _consumer.GetNextAsync();
 

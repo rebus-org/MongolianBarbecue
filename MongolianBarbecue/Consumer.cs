@@ -71,6 +71,11 @@ public class Consumer
 
             await collection.UpdateOneAsync(doc => doc["_id"] == messageId, update, cancellationToken: cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // this one must pass
+            throw;
+        }
         catch
         {
             // lease will be released eventually
@@ -83,7 +88,7 @@ public class Consumer
     public async Task RenewAsync(string messageId, CancellationToken cancellationToken = default)
     {
         if (messageId == null) throw new ArgumentNullException(nameof(messageId));
-        
+
         var collection = _config.Collection;
 
         var renewUpdate = new BsonDocument
@@ -198,9 +203,9 @@ public class Consumer
 
             var message = new ReceivedMessage(
                 headers: headers, body: body,
-                ack: () => AckAsync(id),
-                nack: () => NackAsync(id),
-                renew: () => RenewAsync(id),
+                ack: cancellationToken => AckAsync(id, cancellationToken),
+                nack: cancellationToken => NackAsync(id, cancellationToken),
+                renew: cancellationToken => RenewAsync(id, cancellationToken),
                 deliveryCount: deliveryCount
             );
             return message;

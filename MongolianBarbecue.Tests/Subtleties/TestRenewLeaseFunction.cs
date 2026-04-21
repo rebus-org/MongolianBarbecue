@@ -73,11 +73,11 @@ public class TestRenewLeaseFunction : FixtureBase
 
         // renew it for a while
         await Task.Delay(TimeSpan.FromSeconds(1));
-        await receivedMessage.Renew();
+        await receivedMessage.RenewAsync();
         await Task.Delay(TimeSpan.FromSeconds(1));
-        await receivedMessage.Renew();
+        await receivedMessage.RenewAsync();
         await Task.Delay(TimeSpan.FromSeconds(1));
-        await receivedMessage.Renew();
+        await receivedMessage.RenewAsync();
         await Task.Delay(TimeSpan.FromSeconds(1));
 
         // now we have clearly gone beyond the 2.5 s default lease time - check that the message is still invisible

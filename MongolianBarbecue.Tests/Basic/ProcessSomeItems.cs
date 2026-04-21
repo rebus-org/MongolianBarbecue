@@ -74,7 +74,7 @@ public class ProcessSomeItems : FixtureBase
 
             receivedStrings.Add(Encoding.UTF8.GetString(nextMessage.Body));
 
-            await nextMessage.Ack();
+            await nextMessage.AckAsync();
         }
 
         strings.Sort();
