@@ -43,7 +43,7 @@ public class Consumer
 
         var collection = _config.Collection;
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
 
         _ = await collection.DeleteOneAsync(doc => doc["_id"] == messageId, cancellationToken: cancellationToken);
     }
@@ -63,7 +63,7 @@ public class Consumer
             {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.MinValue}}}
         };
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
 
         try
         {
@@ -96,13 +96,18 @@ public class Consumer
             {"$set", new BsonDocument {{Fields.ReceiveTime, DateTime.UtcNow}}}
         };
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
 
         try
         {
             var update = new BsonDocumentUpdateDefinition<BsonDocument>(renewUpdate);
 
             await collection.UpdateOneAsync(doc => doc["_id"] == messageId, update, cancellationToken: cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // this one must pass
+            throw;
         }
         catch
         {
@@ -124,7 +129,7 @@ public class Consumer
             {"_id", messageId }
         };
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
 
         var definition = new BsonDocumentFilterDefinition<BsonDocument>(criteria);
 
@@ -140,7 +145,7 @@ public class Consumer
 
         var collection = _config.Collection;
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
         using var cursor = await collection.FindAsync(d => d["_id"] == messageId, cancellationToken: cancellationToken);
 
         var document = await cursor.FirstOrDefaultAsync(cancellationToken: cancellationToken);
@@ -179,7 +184,7 @@ public class Consumer
 
         var collection = _config.Collection;
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
 
         var document = await collection.FindOneAndUpdateAsync(filter, update, options, cancellationToken);
 

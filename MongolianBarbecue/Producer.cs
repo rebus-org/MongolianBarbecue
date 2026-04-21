@@ -31,7 +31,7 @@ public class Producer
     /// <summary>
     /// Sends the given message to the specified queue
     /// </summary>
-    public async Task SendAsync(string destinationQueueName, Message message, CancellationToken cancellation = default)
+    public async Task SendAsync(string destinationQueueName, Message message, CancellationToken cancellationToken = default)
     {
         if (destinationQueueName == null) throw new ArgumentNullException(nameof(destinationQueueName));
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -45,7 +45,7 @@ public class Producer
         var headers = BsonArray.Create(message.Headers
             .Select(kvp => new BsonDocument { { Fields.Key, kvp.Key }, { Fields.Value, kvp.Value } }));
 
-        using var @lock = await _semaphore.LockAsync();
+        using var @lock = await _semaphore.LockAsync(cancellationToken);
 
         try
         {
@@ -58,7 +58,7 @@ public class Producer
                 {Fields.ReceiveTime, DateTime.MinValue},
                 {Fields.Headers, headers},
                 {Fields.Body, BsonBinaryData.Create(message.Body)}
-            }, cancellationToken: cancellation);
+            }, cancellationToken: cancellationToken);
         }
         catch (MongoWriteException exception) when (exception.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
