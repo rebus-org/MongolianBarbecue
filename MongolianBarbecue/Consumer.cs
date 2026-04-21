@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongolianBarbecue.Internals;
 using MongolianBarbecue.Model;
 using Nito.AsyncEx;
-
-// ReSharper disable ArgumentsStyleAnonymousFunction
 
 namespace MongolianBarbecue;
 
@@ -38,21 +37,25 @@ public class Consumer
     /// Acknowledges having processed the message with the given <paramref name="messageId"/>.
     /// This will delete the message document from the underlying MongoDB collection.
     /// </summary>
-    public async Task AckAsync(string messageId)
+    public async Task AckAsync(string messageId, CancellationToken cancellationToken = default)
     {
+        if (messageId == null) throw new ArgumentNullException(nameof(messageId));
+
         var collection = _config.Collection;
 
         using var @lock = await _semaphore.LockAsync();
 
-        _ = await collection.DeleteOneAsync(doc => doc["_id"] == messageId);
+        _ = await collection.DeleteOneAsync(doc => doc["_id"] == messageId, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Abandons the lease for the message with the given <paramref name="messageId"/>.
     /// This will set the <see cref="Fields.ReceiveTime"/> field of the message document to <see cref="DateTime.MinValue"/>.
     /// </summary>
-    public async Task NackAsync(string messageId)
+    public async Task NackAsync(string messageId, CancellationToken cancellationToken = default)
     {
+        if (messageId == null) throw new ArgumentNullException(nameof(messageId));
+
         var collection = _config.Collection;
 
         var abandonUpdate = new BsonDocument
@@ -64,7 +67,9 @@ public class Consumer
 
         try
         {
-            await collection.UpdateOneAsync(doc => doc["_id"] == messageId, new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate));
+            var update = new BsonDocumentUpdateDefinition<BsonDocument>(abandonUpdate);
+
+            await collection.UpdateOneAsync(doc => doc["_id"] == messageId, update, cancellationToken: cancellationToken);
         }
         catch
         {
@@ -75,8 +80,10 @@ public class Consumer
     /// <summary>
     /// Renews the lease for the message with the given <paramref name="messageId"/>.
     /// </summary>
-    public async Task RenewAsync(string messageId)
+    public async Task RenewAsync(string messageId, CancellationToken cancellationToken = default)
     {
+        if (messageId == null) throw new ArgumentNullException(nameof(messageId));
+        
         var collection = _config.Collection;
 
         var renewUpdate = new BsonDocument
@@ -88,7 +95,9 @@ public class Consumer
 
         try
         {
-            await collection.UpdateOneAsync(doc => doc["_id"] == messageId, new BsonDocumentUpdateDefinition<BsonDocument>(renewUpdate));
+            var update = new BsonDocumentUpdateDefinition<BsonDocument>(renewUpdate);
+
+            await collection.UpdateOneAsync(doc => doc["_id"] == messageId, update, cancellationToken: cancellationToken);
         }
         catch
         {
@@ -99,8 +108,10 @@ public class Consumer
     /// <summary>
     /// Gets whether a message with the given ID exists
     /// </summary>
-    public async Task<bool> ExistsAsync(string messageId)
+    public async Task<bool> ExistsAsync(string messageId, CancellationToken cancellationToken = default)
     {
+        if (messageId == null) throw new ArgumentNullException(nameof(messageId));
+
         var collection = _config.Collection;
 
         var criteria = new BsonDocument
@@ -110,22 +121,24 @@ public class Consumer
 
         using var @lock = await _semaphore.LockAsync();
 
-        return await collection.CountDocumentsAsync(new BsonDocumentFilterDefinition<BsonDocument>(criteria)) > 0;
+        var definition = new BsonDocumentFilterDefinition<BsonDocument>(criteria);
+
+        return await collection.CountDocumentsAsync(definition, cancellationToken: cancellationToken) > 0;
     }
 
     /// <summary>
     /// Loads the message with the given <paramref name="messageId"/>, returning null if it doesn't exist.
     /// </summary>
-    public async Task<ReceivedMessage> LoadAsync(string messageId)
+    public async Task<ReceivedMessage> LoadAsync(string messageId, CancellationToken cancellationToken = default)
     {
         if (messageId == null) throw new ArgumentNullException(nameof(messageId));
 
         var collection = _config.Collection;
 
         using var @lock = await _semaphore.LockAsync();
-        using var cursor = await collection.FindAsync(d => d["_id"] == messageId);
+        using var cursor = await collection.FindAsync(d => d["_id"] == messageId, cancellationToken: cancellationToken);
 
-        var document = await cursor.FirstOrDefaultAsync();
+        var document = await cursor.FirstOrDefaultAsync(cancellationToken: cancellationToken);
 
         if (document == null) return null;
 
@@ -135,7 +148,7 @@ public class Consumer
     /// <summary>
     /// Gets the next available message or immediately returns null if no message was available
     /// </summary>
-    public async Task<ReceivedMessage> GetNextAsync()
+    public async Task<ReceivedMessage> GetNextAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
 
@@ -163,7 +176,7 @@ public class Consumer
 
         using var @lock = await _semaphore.LockAsync();
 
-        var document = await collection.FindOneAndUpdateAsync(filter, update, options);
+        var document = await collection.FindOneAndUpdateAsync(filter, update, options, cancellationToken);
 
         if (document == null) return null;
 

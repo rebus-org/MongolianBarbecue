@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -30,7 +31,7 @@ public class Producer
     /// <summary>
     /// Sends the given message to the specified queue
     /// </summary>
-    public async Task SendAsync(string destinationQueueName, Message message)
+    public async Task SendAsync(string destinationQueueName, Message message, CancellationToken cancellation = default)
     {
         if (destinationQueueName == null) throw new ArgumentNullException(nameof(destinationQueueName));
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -57,7 +58,7 @@ public class Producer
                 {Fields.ReceiveTime, DateTime.MinValue},
                 {Fields.Headers, headers},
                 {Fields.Body, BsonBinaryData.Create(message.Body)}
-            });
+            }, cancellationToken: cancellation);
         }
         catch (MongoWriteException exception) when (exception.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {

@@ -62,12 +62,12 @@ if (message != null)
 		await HandleItSomehow(message);
 		
 		// acknowledge it (i.e. delete the message)
-		await message.Ack();
+		await message.AckAsync();
 	}
 	catch(Exception exception) 
 	{
 		// try to return message immediately (don't worry if this fails - the lease will eventually expire)
-		await message.Nack();
+		await message.NackAsync();
 
 		throw;
 	}

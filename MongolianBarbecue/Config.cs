@@ -56,6 +56,11 @@ public class Config
     {
         if (database == null) throw new ArgumentNullException(nameof(database));
 
+        if (maxParallelism <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxParallelism), maxParallelism, "Please pass a positive number for the max parallelism");
+        }
+
         if (defaultMessageLeaseSeconds <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(defaultMessageLeaseSeconds), defaultMessageLeaseSeconds, "Please specify a positive number of seconds for the lease duration");
@@ -63,7 +68,7 @@ public class Config
 
         if (maxDeliveryAttempts <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxDeliveryAttempts), maxDeliveryAttempts, "Please specify a positions number for the number of delivery attempts to accept for each message");
+            throw new ArgumentOutOfRangeException(nameof(maxDeliveryAttempts), maxDeliveryAttempts, "Please specify a positive number for the number of delivery attempts to accept for each message");
         }
 
         MaxParallelism = maxParallelism;
