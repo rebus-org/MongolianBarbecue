@@ -81,7 +81,11 @@ if (message != null)
 
 With all queues, it's natural to ask: Which order are messages received in?
 
-It's roughly FIFO, based on ordering by MongoDB's ObjectIDs.
+It's FIFO! – based on ordering by message IDs! 📜
+
+Message IDs can be specified by passing a value for the `Fields.MessageId` key in the message headers, so if you pass the ID explicitly, it's up to YOU to define the ordering. It can e.g. be made sequential by passing a string based on `Guid.CreateVersion7()` from .NET 9.
+
+If you do not specify an ID explicitly, a roughly sequential ID will be automatically provided via MongoDB's ObjectID, which works pretty much like sequential GUIDs.
 
 
 
