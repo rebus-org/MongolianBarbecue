@@ -177,9 +177,15 @@ public class Consumer
             {"$inc", new BsonDocument {{Fields.DeliveryAttempts, 1}}}
         });
 
+        var sort = new BsonDocumentSortDefinition<BsonDocument>(new BsonDocument
+        {
+            { "_id", 1 }
+        });
+
         var options = new FindOneAndUpdateOptions<BsonDocument>
         {
-            ReturnDocument = ReturnDocument.After
+            ReturnDocument = ReturnDocument.After,
+            Sort = sort
         };
 
         var collection = _config.Collection;

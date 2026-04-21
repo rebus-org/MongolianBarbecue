@@ -38,7 +38,7 @@ public class Producer
 
         if (!message.Headers.TryGetValue(Fields.MessageId, out var id))
         {
-            id = Guid.NewGuid().ToString();
+            id = ObjectId.GenerateNewId().ToString();
             message.Headers[Fields.MessageId] = id;
         }
 

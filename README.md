@@ -59,7 +59,7 @@ if (message != null)
 
 	try
 	{
-		await HandleItSomehow(message);
+		await HandleItSomehowAsync(message);
 		
 		// acknowledge it (i.e. delete the message)
 		await message.AckAsync();
@@ -75,6 +75,13 @@ if (message != null)
 ```
 
 :ok_hand:
+
+
+## What about ordering?
+
+With all queues, it's natural to ask: Which order are messages received in?
+
+It's roughly FIFO, based on ordering by MongoDB's ObjectIDs.
 
 
 
