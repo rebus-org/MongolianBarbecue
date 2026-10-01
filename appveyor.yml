@@ -2,6 +2,10 @@ image: Visual Studio 2026
 
 shallow_clone: true
 
+environment:
+  # configure Testcontainers.MongoDb to make it work on AppVeyor
+  DOCKER_API_VERSION: '1.40'
+
 cache:
   - packages -> **\packages.config
   - '%LocalAppData%\NuGet\Cache'
