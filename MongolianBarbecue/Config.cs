@@ -83,9 +83,9 @@ public class Config
         var index = new BsonDocument
         {
             { Fields.DestinationQueueName, 1 },
+            { "_id", 1 },
             { Fields.ReceiveTime, 1 },
-            { Fields.DeliveryAttempts, 1 },
-            { "_id", 1 }
+            { Fields.DeliveryAttempts, 1 }
         };
         collection.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(new BsonDocumentIndexKeysDefinition<BsonDocument>(index)));
         return collection;
