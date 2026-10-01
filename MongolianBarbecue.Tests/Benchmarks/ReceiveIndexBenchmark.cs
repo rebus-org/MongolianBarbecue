@@ -41,17 +41,13 @@ public class ReceiveIndexBenchmark : FixtureBase
         {
             foreach (var consumerCount in consumerCounts)
             {
-                yield return new ReceiveIndexTestCase(messageCount, consumerCount, CreateOldIndex);
-                yield return new ReceiveIndexTestCase(messageCount, consumerCount, CreateNewIndex);
+                yield return new ReceiveIndexTestCase(messageCount, consumerCount, IndexFields: ["q", "rt", "n", "_id"]);
+                yield return new ReceiveIndexTestCase(messageCount, consumerCount, IndexFields: ["q", "_id", "rt", "n"]);
             }
         }
     }
 
-    static void CreateOldIndex(IMongoIndexManager<BsonDocument> indexes) => CreateIndex(indexes, "q", "rt", "n", "_id");
-
-    static void CreateNewIndex(IMongoIndexManager<BsonDocument> indexes) => CreateIndex(indexes, "q", "_id", "rt", "n");
-
-    static void CreateIndex(IMongoIndexManager<BsonDocument> indexes, params string[] fields)
+    static void CreateIndex(IMongoIndexManager<BsonDocument> indexes, IEnumerable<string> fields)
     {
         var index = new BsonDocument(fields.Select(field => new BsonElement(field, 1)));
 
@@ -61,11 +57,11 @@ public class ReceiveIndexBenchmark : FixtureBase
     [TestCaseSource(nameof(GetTestCases))]
     public async Task ReceiveAllMessages(ReceiveIndexTestCase testCase)
     {
-        var (messageCount, consumerCount, createIndex) = testCase;
+        var (messageCount, consumerCount, fields) = testCase;
 
         var stopwatch = new BetterStopwatch();
 
-        createIndex(_collection.Indexes);
+        CreateIndex(_collection.Indexes, fields);
 
         var indexNames = (await _collection.Indexes.ListAsync()).ToList().Select(index => index["name"].AsString);
 
