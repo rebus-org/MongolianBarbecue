@@ -88,6 +88,10 @@ public class Config
             { Fields.DeliveryAttempts, 1 }
         };
         collection.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(new BsonDocumentIndexKeysDefinition<BsonDocument>(index)));
+
+        // drop the old index
+        collection.Indexes.DropOne("q_1_rt_1_n_1__id_1");
+
         return collection;
     }
 

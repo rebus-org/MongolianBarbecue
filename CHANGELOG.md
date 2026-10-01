@@ -29,3 +29,7 @@
 ## 4.0.0
 * Consistent *Async naming of methods
 * Update to mongodb.driver 3.8.0
+
+## 4.1.0
+* Update driver to 3.12.0
+* Fix index for big perf improvement
