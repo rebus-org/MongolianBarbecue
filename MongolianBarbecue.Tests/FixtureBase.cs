@@ -4,21 +4,24 @@ using System.Collections.Concurrent;
 using MongoDB.Driver;
 using NUnit.Framework;
 using Tababular;
+using Testcontainers.MongoDb;
 
 namespace MongolianBarbecue.Tests;
 
 public abstract class FixtureBase
 {
-    static readonly MongoUrl MongoUrl;
+    const string DatabaseName = "mongobbq";
 
-    static FixtureBase()
+    static readonly Lazy<MongoDbContainer> Container = new(() =>
     {
-        var connectionString = $"mongodb://localhost/mongobbq-{DateTime.Now.GetHashCode()%10000}";
-            
-        MongoUrl = new MongoUrl(connectionString);
-    }
+        var container = new MongoDbBuilder("mongo:8.0").Build();
 
-    static readonly TableFormatter Formatter = new TableFormatter(new Hints { CollapseVerticallyWhenSingleLine = true });
+        container.StartAsync().GetAwaiter().GetResult();
+
+        return container;
+    });
+
+    static readonly TableFormatter Formatter = new(new Hints { CollapseVerticallyWhenSingleLine = true });
 
     protected void PrintTable(IEnumerable objects)
     {
@@ -27,18 +30,20 @@ public abstract class FixtureBase
 
     protected IMongoDatabase GetCleanTestDatabase()
     {
-        Console.WriteLine($"Getting clean test database at '{MongoUrl}'");
+        var connectionString = Container.Value.GetConnectionString();
 
-        var mongoClient = new MongoClient(MongoUrl);
+        Console.WriteLine($"Getting clean test database '{DatabaseName}' at '{connectionString}'");
 
-        mongoClient.DropDatabase(MongoUrl.DatabaseName);
+        var mongoClient = new MongoClient(connectionString);
 
-        var database = mongoClient.GetDatabase(MongoUrl.DatabaseName);
+        mongoClient.DropDatabase(DatabaseName);
+
+        var database = mongoClient.GetDatabase(DatabaseName);
 
         return database;
     }
 
-    readonly ConcurrentStack<IDisposable> _disposables = new ConcurrentStack<IDisposable>();
+    readonly ConcurrentStack<IDisposable> _disposables = new();
 
     protected void CleanUpDisposables()
     {

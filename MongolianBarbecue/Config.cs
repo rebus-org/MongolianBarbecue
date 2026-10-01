@@ -90,7 +90,13 @@ public class Config
         collection.Indexes.CreateOne(new CreateIndexModel<BsonDocument>(new BsonDocumentIndexKeysDefinition<BsonDocument>(index)));
 
         // drop the old index
-        collection.Indexes.DropOne("q_1_rt_1_n_1__id_1");
+        try
+        {
+            collection.Indexes.DropOne("q_1_rt_1_n_1__id_1");
+        }
+        catch (MongoCommandException exception) when (exception.CodeName == "IndexNotFound")
+        {
+        }
 
         return collection;
     }
